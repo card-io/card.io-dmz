@@ -1,6 +1,6 @@
 [![card.io logo](Resources/cardio_logo_220.png "card.io")](https://www.card.io)
 
-### card.io-dmz is intended to be used as a submodule of the main card.io SDK, [card.io-iOS-source](https://github.com/card-io/card.io-iOS-source) or card.io-Android-source.
+### card.io-dmz is intended to be used as a submodule of the main card.io SDK, [card.io-iOS-source](https://github.com/card-io/card.io-iOS-source) or [card.io-Android-source](https://github.com/card-io/card.io-Android-source).
 
 #### The card.io-dmz submodule includes the core, client-side image processing code which is shared between iOS and Android.
 
