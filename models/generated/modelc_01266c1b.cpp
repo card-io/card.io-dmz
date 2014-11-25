@@ -2041,7 +2041,7 @@ bool passc_01266c1b() {
   ModelCOutput_01266c1b computed_output = applyc_01266c1b(test_input);
   Eigen::Map<ModelCOutput_01266c1b, Eigen::Aligned> known_good_output((float *)data_8ead34f8);
 
-  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5).any()) {
+  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5f).any()) {
     // TODO: Return more useful info here, rather than printing to stderr...
     std::cerr << "Conv model 01266c1b test failure:\nGot " << computed_output << "\nExpected " << known_good_output << "\n";
     return false;

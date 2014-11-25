@@ -1837,7 +1837,7 @@ bool passm_befe75da() {
   ModelMOutput_befe75da computed_output = applym_befe75da(test_input);
   Eigen::Map<ModelMOutput_befe75da, Eigen::Aligned> known_good_output((float *)data_b8937695);
 
-  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5).any()) {
+  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5f).any()) {
     // TODO: Return more useful info here, rather than printing to stderr...
     std::cerr << "MLP model befe75da test failure:\nGot " << computed_output << "\nExpected " << known_good_output << "\n";
     return false;

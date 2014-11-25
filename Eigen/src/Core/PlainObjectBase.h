@@ -637,16 +637,15 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
 #ifndef EIGEN_PARSED_BY_DOXYGEN
     static EIGEN_STRONG_INLINE void _check_template_params()
     {
-      EIGEN_STATIC_ASSERT((EIGEN_IMPLIES(MaxRowsAtCompileTime==1 && MaxColsAtCompileTime!=1, (Options&RowMajor)==RowMajor)
-                        && EIGEN_IMPLIES(MaxColsAtCompileTime==1 && MaxRowsAtCompileTime!=1, (Options&RowMajor)==0)
-                        && ((RowsAtCompileTime == Dynamic) || (RowsAtCompileTime >= 0))
-                        && ((ColsAtCompileTime == Dynamic) || (ColsAtCompileTime >= 0))
-                        && ((MaxRowsAtCompileTime == Dynamic) || (MaxRowsAtCompileTime >= 0))
-                        && ((MaxColsAtCompileTime == Dynamic) || (MaxColsAtCompileTime >= 0))
-                        && (MaxRowsAtCompileTime == RowsAtCompileTime || RowsAtCompileTime==Dynamic)
-                        && (MaxColsAtCompileTime == ColsAtCompileTime || ColsAtCompileTime==Dynamic)
-                        && (Options & (DontAlign|RowMajor)) == Options),
-        INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(EIGEN_IMPLIES(MaxRowsAtCompileTime==1 && MaxColsAtCompileTime!=1, (Options&RowMajor)==RowMajor),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(EIGEN_IMPLIES(MaxColsAtCompileTime==1 && MaxRowsAtCompileTime!=1, (Options&RowMajor)==0),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(((RowsAtCompileTime == Dynamic) || (RowsAtCompileTime >= 0)),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(((ColsAtCompileTime == Dynamic) || (ColsAtCompileTime >= 0)),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(((MaxRowsAtCompileTime == Dynamic) || (MaxRowsAtCompileTime >= 0)),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(((MaxColsAtCompileTime == Dynamic) || (MaxColsAtCompileTime >= 0)),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT((MaxRowsAtCompileTime == RowsAtCompileTime || RowsAtCompileTime==Dynamic),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT((MaxColsAtCompileTime == ColsAtCompileTime || ColsAtCompileTime==Dynamic),INVALID_MATRIX_TEMPLATE_PARAMETERS)
+      EIGEN_STATIC_ASSERT(((Options & (DontAlign|RowMajor)) == Options), INVALID_MATRIX_TEMPLATE_PARAMETERS)
     }
 #endif
 

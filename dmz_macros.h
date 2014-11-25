@@ -8,4 +8,10 @@
 
 #define DMZ_INTERNAL static
 
+#if CYTHON_DMZ
+#define DMZ_INTERNAL_UNLESS_CYTHON
+#else
+#define DMZ_INTERNAL_UNLESS_CYTHON static
+#endif
+
 #endif  // DMZ_MACROS_H

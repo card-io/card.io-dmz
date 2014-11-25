@@ -6,6 +6,7 @@
 #ifndef DMZ_SCAN_FRAME_H
 #define DMZ_SCAN_FRAME_H
 
+#include "expiry_seg.h"
 #include "n_categorize.h"
 #include "opencv2/core/core_c.h" // needed for IplImage
 #include "dmz_macros.h"
@@ -15,6 +16,8 @@ typedef struct {
   NumberScores            scores;
   NHorizontalSegmentation hseg;
   NVerticalSegmentation   vseg;
+  GroupedRectsList        expiry_groups;
+  GroupedRectsList        name_groups;
   bool                    usable;
   bool                    upside_down; // whether the frame was found to be upside-down
   bool                    flipped; // whether the frame has been pre-flipped
@@ -28,7 +31,7 @@ typedef struct {
 // Scans a single card image, returns a summary of all info gathered along the way.
 // If usable is false, disregard all other info.
 // y must be 428x270, uint8_t, no roi, single channel greyscale.
-DMZ_INTERNAL void scan_card_image(IplImage *y, FrameScanResult *result);
+DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool collect_expiry, FrameScanResult *result);
 
 #if CYTHON_DMZ
 typedef struct {

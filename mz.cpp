@@ -97,6 +97,19 @@ void py_mz_get_cv_image_data(IplImage *source,
     *roi_height = roi.height;
 }
 
+void py_mz_cvSetImageROI(IplImage* image, int left, int top, int width, int height) {
+  cvSetImageROI(image, cvRect(left, top, width, height));
+}
+
+void py_mz_cvResetImageROI(IplImage* image) {
+  cvResetImageROI(image);
+}
+
+//void py_mz_expiry_fill_borders(IplImage *character_image_float, int char_top, int char_left) {
+//  expiry_fill_borders(character_image_float, char_top, char_left);
+//}
+
+
 #endif
 
 

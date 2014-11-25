@@ -2041,7 +2041,7 @@ bool passc_5c241121() {
   ModelCOutput_5c241121 computed_output = applyc_5c241121(test_input);
   Eigen::Map<ModelCOutput_5c241121, Eigen::Aligned> known_good_output((float *)data_c2bdeb12);
 
-  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5).any()) {
+  if(((computed_output.array() - known_good_output.array()).abs() > 1e-5f).any()) {
     // TODO: Return more useful info here, rather than printing to stderr...
     std::cerr << "Conv model 5c241121 test failure:\nGot " << computed_output << "\nExpected " << known_good_output << "\n";
     return false;

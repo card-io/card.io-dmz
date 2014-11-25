@@ -374,6 +374,8 @@ static inline void edge_convolve_s16(const int16_t *source_pixels, int16_t *dest
    );
 }
 
+#pragma mark vectorized_convolve_transpose7
+
 DMZ_INTERNAL void vectorized_convolve_transpose7(IplImage *image, IplImage *dest, int16_t *kernel7) {
 
 #define kKernelSize 7
@@ -469,10 +471,13 @@ DMZ_INTERNAL void vectorized_convolve_transpose7(IplImage *image, IplImage *dest
 
 #endif // DMZ_HAS_NEON_COMPILETIME
 
+#pragma mark llcv_sobel7_c
 
 DMZ_INTERNAL void llcv_sobel7_c(IplImage *src, IplImage *dst, bool dx, bool dy) {
   cvSobel(src, dst, !!dx, !!dy, 7); // !! to ensure 0/1-ness of dx, dy
 }
+
+#pragma mark llcv_sobel7_neon
 
 DMZ_INTERNAL void llcv_sobel7_neon(IplImage *src, IplImage *dst, IplImage *scratch, bool dx, bool dy) {
 #if DMZ_HAS_NEON_COMPILETIME
@@ -489,6 +494,8 @@ DMZ_INTERNAL void llcv_sobel7_neon(IplImage *src, IplImage *dst, IplImage *scrat
   } 
 #endif
 }
+
+#pragma mark llcv_sobel7
 
 DMZ_INTERNAL void llcv_sobel7(IplImage *src, IplImage *dst, IplImage *scratch, bool dx, bool dy) {
   assert(src != NULL);
@@ -532,11 +539,15 @@ static clock_t fastest_opencv = CLOCKS_PER_SEC * 1000;
 #define TIMING_ITERATIONS 100
 #endif
 
+#pragma mark llcv_sobel3_dx_dy_opencv
+
 #if TEST_SOBEL3
 DMZ_INTERNAL void llcv_sobel3_dx_dy_opencv(IplImage *src, IplImage *dst) {
   cvSobel(src, dst, 1, 1, 3);
 }
 #endif
+
+#pragma mark llcv_sobel3_dx_dy_c_neon
 
 // For reference, the sobel3_dx_dy kernel is:
 //  1,  0, -1
@@ -615,6 +626,7 @@ DMZ_INTERNAL void llcv_sobel3_dx_dy_c_neon(IplImage *src, IplImage *dst) {
 #undef kSobel3VectorSize
 }
 
+#pragma mark llcv_sobel3_dx_dy
 
 DMZ_INTERNAL void llcv_sobel3_dx_dy(IplImage *src, IplImage *dst) {
   assert(src->nChannels == 1);
@@ -685,10 +697,12 @@ DMZ_INTERNAL void llcv_sobel3_dx_dy(IplImage *src, IplImage *dst) {
 }
 
 // For reference, the scharr3_dx kernel is:
-//  -3,  0,  +3                                               |  +3 |
-// -10,  0, +10  =  [-1, 0, +1] applied to each row, and then | +10 | applied to each column
-//  -3,  0,  +3                                               |  +3 |
-DMZ_INTERNAL void llcv_scharr3_dx_c_neon(IplImage *src, IplImage *dst) {
+//  -3,  0,  +3                                                    |  +3 |
+// -10,  0, +10  =  [-1, 0, +1] applied to each pixel, followed by | +10 |
+//  -3,  0,  +3                                                    |  +3 |
+//
+// Note that this function actually returns the ABSOLUTE VALUE of each Scharr score.
+DMZ_INTERNAL void llcv_scharr3_dx_abs_c_neon(IplImage *src, IplImage *dst) {
 #define kScharr3VectorSize 8
   
   CvSize src_size = cvGetSize(src);
@@ -705,38 +719,28 @@ DMZ_INTERNAL void llcv_scharr3_dx_c_neon(IplImage *src, IplImage *dst) {
   
   uint16_t last_col_index = (uint16_t)(src_size.width - 1);
   bool can_use_neon = dmz_has_neon_runtime();
-  
   int16_t intermediate[src_size.width][src_size.height];  // note: intermediate[col][row]
   
   for(uint16_t row_index = 0; row_index < src_size.height; row_index++) {
     const uint8_t *src_row_origin = src_data_origin + row_index * src_width_step;
-
     uint16_t col_index = 0;
-    while(col_index < src_size.width) {
-      bool is_first_col = col_index == 0;
-      bool is_last_col = col_index == last_col_index;
-      bool can_process_next_chunk_as_vector = col_index + kScharr3VectorSize < last_col_index;
+    while(col_index <= last_col_index) {
+      uint16_t col_left_index = col_index == 0 ? 0 : col_index - 1;
+      uint16_t col_right_index = col_index == last_col_index ? last_col_index : col_index + 1;
+      bool can_process_next_chunk_as_vector = col_index + kScharr3VectorSize - 1 <= last_col_index;
       if (!can_use_neon || !can_process_next_chunk_as_vector) {
         // scalar step
-        int16_t sum;
-        if(dmz_unlikely(is_first_col)) {
-          sum = -src_row_origin[col_index] + src_row_origin[col_index + 1];
-        } else if(dmz_unlikely(is_last_col)) {
-          sum = -src_row_origin[col_index - 1] + src_row_origin[col_index];
-        } else {
-          sum = -src_row_origin[col_index - 1] + src_row_origin[col_index + 1];
-        }
-        intermediate[col_index][row_index] = sum;
+        intermediate[col_index][row_index] = (int16_t)abs(src_row_origin[col_right_index] - src_row_origin[col_left_index]);
         col_index++;
       }
       else {
         // vector step
 #if DMZ_HAS_NEON_COMPILETIME
-        uint8x8_t tl = vld1_u8(src_row_origin + col_index - 1);
-        uint8x8_t tr = vld1_u8(src_row_origin + col_index + 1);
+        uint8x8_t tl = vld1_u8(src_row_origin + col_left_index);
+        uint8x8_t tr = vld1_u8(src_row_origin + col_right_index);
         int16x8_t tl_s16 = vreinterpretq_s16_u16(vmovl_u8(tl));
         int16x8_t tr_s16 = vreinterpretq_s16_u16(vmovl_u8(tr));
-        int16x8_t sums = vsubq_s16(tl_s16, tr_s16);
+        int16x8_t sums = vabdq_s16(tr_s16, tl_s16);
         intermediate[col_index + 0][row_index] = vgetq_lane_s16(sums, 0);
         intermediate[col_index + 1][row_index] = vgetq_lane_s16(sums, 1);
         intermediate[col_index + 2][row_index] = vgetq_lane_s16(sums, 2);
@@ -755,16 +759,14 @@ DMZ_INTERNAL void llcv_scharr3_dx_c_neon(IplImage *src, IplImage *dst) {
 
   for(uint16_t col_index = 0; col_index < src_size.width; col_index++) {
     uint16_t row_index = 0;
-    while(row_index < src_size.height) {
+    while(row_index <= last_row_index) {
+      int16_t *dst_row_origin = (int16_t *)(dst_data_origin + row_index * dst_width_step);
       uint16_t row_top_index = row_index == 0 ? 0 : row_index - 1;
       uint16_t row_bot_index = row_index == last_row_index ? last_row_index : row_index + 1;
-      
-      int16_t *dst_row_origin = (int16_t *)(dst_data_origin + row_index * dst_width_step);
-      
-      bool can_process_next_chunk_as_vector = row_bot_index + kScharr3VectorSize - 1 <= last_row_index;
+      bool can_process_next_chunk_as_vector = row_index + kScharr3VectorSize - 1 <= last_row_index;
       if (!can_use_neon || !can_process_next_chunk_as_vector) {
         // scalar step
-        dst_row_origin[col_index] = 3 * intermediate[col_index][row_top_index] + 10 * intermediate[col_index][row_index] + 3 * intermediate[col_index][row_bot_index];
+        dst_row_origin[col_index] = 3 * (intermediate[col_index][row_top_index] + intermediate[col_index][row_bot_index]) + 10 * intermediate[col_index][row_index];
         row_index++;
       }
       else {
@@ -797,11 +799,112 @@ DMZ_INTERNAL void llcv_scharr3_dx_c_neon(IplImage *src, IplImage *dst) {
     }
   }
   
+  #undef kScharr3VectorSize
+}
+
+#pragma mark llcv_scharr3_dx_abs
+
+// Note that this function actually returns the ABSOLUTE VALUE of each Scharr score.
+#if DMZ_DEBUG
+void llcv_scharr3_dx_abs(IplImage *src, IplImage *dst) {
+#else
+DMZ_INTERNAL_UNLESS_CYTHON void llcv_scharr3_dx_abs(IplImage *src, IplImage *dst) {
+#endif
+  assert(src->nChannels == 1);
+  assert(src->depth == IPL_DEPTH_8U);
+
+  assert(dst->nChannels == 1);
+  assert(dst->depth == IPL_DEPTH_16S);
+
+  CvSize src_size = cvGetSize(src);
+  CvSize dst_size = cvGetSize(dst);
+#pragma unused(src_size, dst_size) // work around broken compiler warnings
+
+  assert(dst_size.width == src_size.width);
+  assert(dst_size.height == src_size.height);
+
+  llcv_scharr3_dx_abs_c_neon(src, dst);
+}
+
+#pragma mark llcv_scharr3_dy_abs_c_neon
+
+// For reference, the scharr3_dy kernel is:
+// -3, -10,  -3     | -1 |
+//  0,   0,   0  =  |  0 | applied to each pixel, followed by [+3, +10, +3]
+// +3, +10,  +3     | +1 |
+//
+// Note that this function actually returns the ABSOLUTE VALUE of each Scharr score.
+DMZ_INTERNAL void llcv_scharr3_dy_abs_c_neon(IplImage *src, IplImage *dst) {
+#define kScharr3VectorSize 8
+
+  CvSize src_size = cvGetSize(src);
+  assert(src_size.width > kScharr3VectorSize);
+
+  uint8_t *src_data_origin = (uint8_t *)llcv_get_data_origin(src);
+  uint16_t src_width_step = (uint16_t)src->widthStep;
+
+  uint8_t *dst_data_origin = (uint8_t *)llcv_get_data_origin(dst);
+  uint16_t dst_width_step = (uint16_t)dst->widthStep;
+
+//  bool can_use_neon = dmz_has_neon_runtime();
+  int16_t intermediate[src_size.width][src_size.height];  // note: intermediate[col][row]
+
+  uint16_t last_row_index = (uint16_t)src_size.height - 1;
+
+  for(uint16_t col_index = 0; col_index < src_size.width; col_index++) {
+    uint16_t row_index = 0;
+    while(row_index <= last_row_index) {
+      uint16_t row_top_index = row_index == 0 ? 0 : row_index - 1;
+      uint16_t row_bot_index = row_index == last_row_index ? last_row_index : row_index + 1;
+      const uint8_t *top_row_origin = src_data_origin + row_top_index * src_width_step;
+      const uint8_t *bot_row_origin = src_data_origin + row_bot_index * src_width_step;
+//      bool can_process_next_chunk_as_vector = row_index + kScharr3VectorSize - 1 <= last_row_index;
+//      if (!can_use_neon || !can_process_next_chunk_as_vector)
+      {
+        // scalar step
+        intermediate[col_index][row_index] = (int16_t)abs(bot_row_origin[col_index] - top_row_origin[col_index]);
+        row_index++;
+      }
+//      else {
+//        // vector step
+//#if DMZ_HAS_NEON_COMPILETIME
+//#endif
+//      }
+    }
+  }
+
+  uint16_t last_col_index = (uint16_t)src_size.width - 1;
+
+  for(uint16_t row_index = 0; row_index < src_size.height; row_index++) {
+    int16_t *dst_row_origin = (int16_t *)(dst_data_origin + row_index * dst_width_step);
+    uint16_t col_index = 0;
+    while(col_index <= last_col_index) {
+      uint16_t col_left_index = col_index == 0 ? 0 : col_index - 1;
+      uint16_t col_right_index = col_index == last_col_index ? last_col_index : col_index + 1;
+//      bool can_process_next_chunk_as_vector = col_index + kScharr3VectorSize - 1 <= last_col_index;
+//      if (!can_use_neon || !can_process_next_chunk_as_vector)
+      {
+        // scalar step
+        dst_row_origin[col_index] = 3 * (intermediate[col_left_index][row_index] + intermediate[col_right_index][row_index]) + 10 * intermediate[col_index][row_index];
+        col_index++;
+      }
+//      else {
+//        // vector step
+//#if DMZ_HAS_NEON_COMPILETIME
+//#endif
+//      }
+    }
+  }
 #undef kScharr3VectorSize
 }
 
-
-void llcv_scharr3_dx(IplImage *src, IplImage *dst) {
+#pragma mark llcv_scharr3_dy_abs
+// Note that this function actually returns the ABSOLUTE VALUE of each Scharr score.
+#if DMZ_DEBUG
+void llcv_scharr3_dy_abs(IplImage *src, IplImage *dst) {
+#else
+DMZ_INTERNAL_UNLESS_CYTHON void llcv_scharr3_dy_abs(IplImage *src, IplImage *dst) {
+#endif
   assert(src->nChannels == 1);
   assert(src->depth == IPL_DEPTH_8U);
   
@@ -815,7 +918,7 @@ void llcv_scharr3_dx(IplImage *src, IplImage *dst) {
   assert(dst_size.width == src_size.width);
   assert(dst_size.height == src_size.height);
   
-  llcv_scharr3_dx_c_neon(src, dst);
+  llcv_scharr3_dy_abs_c_neon(src, dst);
 }
 
 #endif

@@ -92,4 +92,21 @@ bool dmz_detect_edges(IplImage *y_sample, IplImage *cb_sample, IplImage *cr_samp
 // to free transformed.
 void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points corner_points, FrameOrientation orientation, bool upsample, IplImage **transformed);
 
+
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_scharr3_dx_abs(IplImage *src, IplImage *dst);
+#endif
+
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst);
+#endif
+
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst);
+#endif
+
+
 #endif // DMZ_H

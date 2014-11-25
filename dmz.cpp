@@ -476,4 +476,26 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
   llcv_unwarp(dmz, sample, src_points, dst_rect, *transformed);
 }
 
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_scharr3_dx_abs(IplImage *src, IplImage *dst) {
+  llcv_scharr3_dx_abs(src, dst);
+}
+#endif
+
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst) {
+  llcv_scharr3_dy_abs(src, dst);
+}
+#endif
+
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst) {
+  llcv_sobel3_dx_dy(src, dst);
+}
+#endif
+
+
 #endif // COMPILE_DMZ

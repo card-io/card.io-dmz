@@ -50,4 +50,9 @@ extern void py_mz_get_cv_image_data(IplImage *source,
 #endif
 
 
+extern void py_mz_cvSetImageROI(IplImage* image, int left, int top, int width, int height);
+extern void py_mz_cvResetImageROI(IplImage* image);
+
+//extern void py_mz_expiry_fill_borders(IplImage *character_image_float, int char_top, int char_left);
+
 #endif // DMZ_MZ_H
