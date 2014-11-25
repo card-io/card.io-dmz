@@ -12,7 +12,8 @@
 #include "cv/stats.h"
 #include <time.h>
 
-#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 1
+#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 0
+#define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
 #include "models/expiry/modelc_e1533ae9.hpp"
@@ -281,7 +282,9 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
   for (GroupedRectsListIterator group = new_groups.begin(); group != new_groups.end(); ++group) {
     char expiries_string[8192];
     group->scores = categorize_expiry_digits(card_y, as_float, *group, expiries_string);
-    dmz_debug_print("%s\n", expiries_string);
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+    dmz_debug_print("\n%s\n", expiries_string);
+#endif
   }
 
   // Aggregate the newly found groups with those we've previously found:
@@ -297,8 +300,11 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
     }
     char expiry_string[128];
     memset(expiry_string, 0, sizeof(expiry_string));
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
     dmz_debug_print("Expiry stability (Group %d): ", (int) (group - expiry_groups.begin()));
+#endif
     for(uint8_t i = 0; i < group->character_rects.size(); i++) {
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
       switch (group->pattern) {
         case ExpiryPatternMMsYY:
           if (i == 2) {
@@ -315,11 +321,14 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
         default:
           break;
       }
+#endif
       ExpiryGroupScores::Index r, c;
       float max_score = group->scores.row(i).maxCoeff(&r, &c);
       float sum = group->scores.row(i).sum();
       float stability = max_score / sum;
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
       dmz_debug_print("%d ", (int) ceilf(stability * 100));
+#endif
       if (stability < kExpiryMinStability) {
         expiry_string[i] = ' ';
       }
@@ -327,7 +336,9 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
         expiry_string[i] = (char) ((uint8_t)'0' + (uint8_t)c);
       }
     }
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
     dmz_debug_print("\n");
+#endif
 
     int month = -1;
     int year = -1;
@@ -374,7 +385,7 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
         *expiry_month = month;
         *expiry_year = full_year;
       }
-#if CARDIO_DEBUG
+#if DMZ_DEBUG
       else {
         // For current testing, which includes several expired cards, allow dates in the past.
         if (year > 60) {
@@ -385,7 +396,9 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
           *expiry_year = full_year;
         }
         else {
-          dmz_debug_print("%d/%d is a disallowed date.\n", month, full_year);
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+          dmz_debug_print("%02d/%04d is a disallowed date.\n", month, full_year);
+#endif
         }
       }
 #endif
@@ -396,7 +409,9 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
   dmz_debug_print("Grand Total for Expiry categorization: %.3f\n", ((float)dmz_debug_timer_stop(2)) / 1000.0);
 #endif
 
-  dmz_debug_print("Returning %d/%d\n", *expiry_month, *expiry_year);
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+  dmz_debug_print("Returning expiry %02d/%04d\n", *expiry_month, *expiry_year);
+#endif
 }
 
 #endif // COMPILE_DMZ

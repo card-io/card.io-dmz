@@ -68,14 +68,16 @@ DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool co
     cvResetImageROI(y);
   }
 
+#if SCAN_EXPIRY
   if (collect_expiry && result->vseg.y_offset < kCreditCardTargetHeight - 2 * kSmallCharacterHeight) {
     best_expiry_seg(y, result->vseg.y_offset, result->expiry_groups, result->name_groups);
-#if DMZ_DEBUG
+  #if DMZ_DEBUG
     if (result->expiry_groups.empty()) {
       dmz_debug_log("Expiry segmentation failed.");
     }
-#endif
+  #endif
   }
+#endif
 }
 
 #if CYTHON_DMZ
