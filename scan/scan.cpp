@@ -149,7 +149,11 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
 
   // Once the card number has been successfully scanned, then wait a bit longer for successful expiry scan (if collecting expiry)
   if (state->timeOfCardNumberCompletionInMilliseconds > 0) {
+#if SCAN_EXPIRY
     if (state->collect_expiry) {
+#else
+    if (false) {
+#endif
       struct timeval time;
       gettimeofday(&time, NULL);
       long now = (long)((time.tv_sec * 1000) + (time.tv_usec / 1000));

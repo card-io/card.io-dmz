@@ -44,9 +44,11 @@ static BOOL failure = NO;
 }
 
 + (void)testExpiryModels {
+#if SCAN_EXPIRY
   SELF_CHECK_MODEL(passm_730c4cbd);
   SELF_CHECK_MODEL(passc_e1533ae9);
   SELF_CHECK_MODEL(passc_ab0b6054);
+#endif
 }
 
 + (void)selfCheck {
