@@ -13,17 +13,6 @@ from fabric.utils import abort
 from fabric import colors
 
 
-SALT = "i wish i were a hunter in search of different food"
-
-env.verbose = False
-
-def verbose(be_verbose=True):
-    """
-    Makes all following tasks more verbose.
-    """
-    env.verbose = be_verbose
-
-
 def concat():
     """
     Regenerate dmz_all.cpp.

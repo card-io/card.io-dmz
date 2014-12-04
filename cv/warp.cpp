@@ -122,8 +122,6 @@ void llcv_calc_persp_transform(float *matrixData, int matrixDataSize, bool rowMa
   // TODO - instead of copying final values into matrixData return array, do one of:
   // (a) assign directly into matrixData, or
   // (b) use Eigen::Mat so that assignment goes straight into underlying matrixData
-  // (see https://github.com/lumberlabs/dmz/issues/5#issuecomment-6715537 for our discussion on this)
-
 }
 
 

@@ -25,7 +25,6 @@
 #include "./mz.cpp"
 #include "./mz_android.cpp"
 #include "./processor_support.cpp"
-#include "./rand_util.c"
 #include "./scan/frame.cpp"
 #include "./scan/n_categorize.cpp"
 #include "./scan/n_hseg.cpp"
