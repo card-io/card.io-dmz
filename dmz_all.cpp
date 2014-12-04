@@ -29,7 +29,6 @@
 #include "./mz.cpp"
 #include "./mz_android.cpp"
 #include "./processor_support.cpp"
-#include "./rand_util.c"
 #include "./scan/expiry_categorize.cpp"
 #include "./scan/expiry_seg.cpp"
 #include "./scan/frame.cpp"
