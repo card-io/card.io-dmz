@@ -9,6 +9,6 @@
 #include "expiry_types.h"
 #include "opencv2/imgproc/types_c.h"
 
-DMZ_INTERNAL GroupedRectsList best_expiry_seg(IplImage *y, uint16_t y_offset);
+DMZ_INTERNAL void best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, GroupedRectsList &expiry_groups, GroupedRectsList &name_groups);
 
 #endif
