@@ -239,6 +239,10 @@ void *mz_create(void) {
 	return mz;
 }
 
+void mz_prepare_for_backgrounding(void *mz) {
+	// empty callback is required.
+}
+
 // Destruction of the MZ
 void mz_destroy(void *mz) {
 #if ANDROID_USE_GLES_WARP
