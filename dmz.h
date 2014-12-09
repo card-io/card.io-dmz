@@ -96,16 +96,11 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
 // FOR CYTHON USE ONLY
 #if CYTHON_DMZ
 void dmz_scharr3_dx_abs(IplImage *src, IplImage *dst);
-#endif
-
-// FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst);
-#endif
-
-// FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst);
+
+#include "scan/expiry_types.h"
+void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects *expiry_groups, uint16_t *number_of_groups);
 #endif
 
 

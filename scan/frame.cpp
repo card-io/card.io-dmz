@@ -90,7 +90,7 @@ void cython_scan_card_image(IplImage *y, CythonFrameScanResult *result) {
   frameScanResult.torch_is_on = 0;
   frameScanResult.flipped = 0;
 
-  scan_card_image(y, true, &frameScanResult);
+  scan_card_image(y, true, true, &frameScanResult);
   
   result->usable = frameScanResult.usable;
   result->hseg = frameScanResult.hseg;

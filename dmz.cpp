@@ -497,5 +497,39 @@ void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst) {
 }
 #endif
 
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+#include "scan/expiry_seg.h"
+void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects *cython_expiry_groups, uint16_t *number_of_groups) {
+  GroupedRectsList expiry_groups;
+  GroupedRectsList name_groups;
+  
+  best_expiry_seg(card_y, starting_y_offset, expiry_groups, name_groups);
+
+  cython_expiry_groups = (CythonGroupedRects *) malloc(expiry_groups.size() * sizeof(CythonGroupedRects));
+  
+  GroupedRectsListIterator group;
+  int index;
+  for (group = expiry_groups.begin(), index = 0; group != expiry_groups.end(); ++group, ++index) {
+    cython_expiry_groups[index].top = group->top;
+    cython_expiry_groups[index].left = group->left;
+    cython_expiry_groups[index].width = group->width;
+    cython_expiry_groups[index].height = group->height;
+    cython_expiry_groups[index].character_width = group->character_width;
+    cython_expiry_groups[index].number_of_character_rects = group->character_rects.size();
+
+    size_t character_rects_size = (group->character_rects.size() * sizeof(CythonCharacterRect));
+    cython_expiry_groups[index].character_rects = (CythonCharacterRect *) malloc(character_rects_size);
+    
+    for (int character_index = 0; character_index < group->character_rects.size(); ++character_index) {
+      cython_expiry_groups[index].character_rects[character_index].top = group->character_rects[character_index].top;
+      cython_expiry_groups[index].character_rects[character_index].left = group->character_rects[character_index].left;
+    }
+  }
+  
+  *number_of_groups = expiry_groups.size();
+}
+#endif
+
 
 #endif // COMPILE_DMZ

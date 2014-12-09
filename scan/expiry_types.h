@@ -91,4 +91,22 @@ struct GroupedRects
 typedef std::vector<GroupedRects> GroupedRectsList;
 typedef std::vector<GroupedRects>::iterator GroupedRectsListIterator;
 
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+typedef struct {
+  int   top;
+  int   left;
+} CythonCharacterRect;
+
+typedef struct {
+  int   top;
+  int   left;
+  int   width;
+  int   height;
+  int   character_width;
+  int   number_of_character_rects;
+  CythonCharacterRect *character_rects;
+} CythonGroupedRects;
+#endif
+
 #endif
