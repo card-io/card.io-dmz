@@ -24,12 +24,12 @@ typedef struct {
 
 } llcv_gles_context;
 
-void DMZ_MANGLE_NAME(llcv_gles_setup)(llcv_gles_context *mz, int width, int height);
-void DMZ_MANGLE_NAME(llcv_gles_teardown)(llcv_gles_context *mz);
+void llcv_gles_setup(llcv_gles_context *mz, int width, int height);
+void llcv_gles_teardown(llcv_gles_context *mz);
 
 #endif
 
-void DMZ_MANGLE_NAME(llcv_gles_warp_perspective)(void* mz, IplImage *input, const dmz_point corners[4], IplImage *card);
+void llcv_gles_warp_perspective(void* mz, IplImage *input, const dmz_point corners[4], IplImage *card);
 
 
 #endif

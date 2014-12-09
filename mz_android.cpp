@@ -230,7 +230,7 @@ void llcv_gles_warp_perspective(void* mzv, IplImage *input, const dmz_point corn
 #endif // ANDROID_USE_GLES_WARP
 }
 
-void *DMZ_MANGLE_NAME(mz_create)(void) {
+void *mz_create(void) {
 	void* mz = NULL;
 #if ANDROID_USE_GLES_WARP
 	mz = malloc(sizeof(llcv_gles_context));
@@ -240,7 +240,7 @@ void *DMZ_MANGLE_NAME(mz_create)(void) {
 }
 
 // Destruction of the MZ
-void DMZ_MANGLE_NAME(mz_destroy)(void *mz) {
+void mz_destroy(void *mz) {
 #if ANDROID_USE_GLES_WARP
 	llcv_gles_teardown((llcv_gles_context*)mz);
 #endif
