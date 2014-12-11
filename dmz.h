@@ -100,7 +100,11 @@ void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst);
 void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst);
 
 #include "scan/expiry_types.h"
-void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects *expiry_groups, uint16_t *number_of_groups);
+void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects **expiry_groups, uint16_t *number_of_groups);
+void dmz_expiry_extract(IplImage *card_y,
+                        uint16_t *number_of_expiry_groups, CythonGroupedRects **cython_expiry_groups,
+                        uint16_t *number_of_new_groups, CythonGroupedRects **cython_new_groups,
+                        int *expiry_month, int *expiry_year);
 #endif
 
 
