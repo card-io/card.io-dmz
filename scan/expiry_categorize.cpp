@@ -385,7 +385,7 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
         *expiry_month = month;
         *expiry_year = full_year;
       }
-#if DMZ_DEBUG
+#if DMZ_DEBUG || CYTHON_DMZ
       else {
         // For current testing, which includes several expired cards, allow dates in the past.
         if (year > 60) {
