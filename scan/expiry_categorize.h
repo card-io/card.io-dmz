@@ -17,4 +17,12 @@ DMZ_INTERNAL void expiry_extract(IplImage *cardY,
                                  int *expiry_month,
                                  int *expiry_year);
 
+#if CYTHON_DMZ
+DMZ_INTERNAL void expiry_extract_group(IplImage *card_y,
+                                       GroupedRects &group,
+                                       ExpiryGroupScores &old_scores,
+                                       int *expiry_month,
+                                       int *expiry_year);
+#endif
+  
 #endif

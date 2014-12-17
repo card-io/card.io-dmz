@@ -481,24 +481,31 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
 void dmz_scharr3_dx_abs(IplImage *src, IplImage *dst) {
   llcv_scharr3_dx_abs(src, dst);
 }
-#endif
 
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst) {
   llcv_scharr3_dy_abs(src, dst);
 }
-#endif
 
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst) {
   llcv_sobel3_dx_dy(src, dst);
 }
-#endif
 
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
+ExpiryGroupScores cythonScores_to_ExpiryGroupScores(CythonGroupScores cython_scores) {
+  ExpiryGroupScores scores;
+  
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
+      scores(character_index, digit_value) = cython_scores[character_index][digit_value];
+    }
+  }
+  
+  return scores;
+}
+
+// FOR CYTHON USE ONLY
 CythonGroupedRects groupedRects_to_CythonGroupedRects(GroupedRectsListIterator group) {
   CythonGroupedRects cython_expiry_group;
   int character_index;
@@ -510,9 +517,9 @@ CythonGroupedRects groupedRects_to_CythonGroupedRects(GroupedRectsListIterator g
   cython_expiry_group.height = group->height;
   cython_expiry_group.character_width = group->character_width;
   cython_expiry_group.pattern = group->pattern;
-  
-  for (character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
-    for (digit_value = 0; digit_value < 10; digit_value++) {
+
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
       cython_expiry_group.scores[character_index][digit_value] = group->scores(character_index, digit_value);
     }
   }
@@ -531,10 +538,8 @@ CythonGroupedRects groupedRects_to_CythonGroupedRects(GroupedRectsListIterator g
 
   return cython_expiry_group;
 }
-#endif
 
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 GroupedRects cythonGroupedRects_to_GroupedRects(CythonGroupedRects *cython_group) {
   GroupedRects group;
   
@@ -544,13 +549,7 @@ GroupedRects cythonGroupedRects_to_GroupedRects(CythonGroupedRects *cython_group
   group.height = cython_group->height;
   group.character_width = cython_group->character_width;
   group.pattern = (ExpiryPattern) cython_group->pattern;
-
-  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
-    for (int digit_value = 0; digit_value < 10; digit_value++) {
-      group.scores(character_index, digit_value) = cython_group->scores[character_index][digit_value];
-    }
-  }
-  
+  group.scores = cythonScores_to_ExpiryGroupScores(cython_group->scores);
   group.recently_seen_count = cython_group->recently_seen_count;
   group.total_seen_count = cython_group->total_seen_count;
   
@@ -562,10 +561,8 @@ GroupedRects cythonGroupedRects_to_GroupedRects(CythonGroupedRects *cython_group
   
   return group;
 }
-#endif
-  
+
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
 #include "scan/expiry_seg.h"
 void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects **cython_expiry_groups, uint16_t *number_of_groups) {
   GroupedRectsList expiry_groups;
@@ -583,11 +580,10 @@ void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGro
   
   *number_of_groups = expiry_groups.size();
 }
-#endif
+
+#include "scan/expiry_categorize.h"
 
 // FOR CYTHON USE ONLY
-#if CYTHON_DMZ
-#include "scan/expiry_categorize.h"
 void dmz_expiry_extract(IplImage *card_y,
                         uint16_t *number_of_expiry_groups, CythonGroupedRects **cython_expiry_groups,
                         uint16_t *number_of_new_groups, CythonGroupedRects **cython_new_groups,
@@ -617,6 +613,24 @@ void dmz_expiry_extract(IplImage *card_y,
   GroupedRectsListIterator group;
   for (group = expiry_groups.begin(), index = 0; group != expiry_groups.end(); ++group, ++index) {
     (*cython_expiry_groups)[index] = groupedRects_to_CythonGroupedRects(group);
+  }
+}
+
+void dmz_expiry_extract_group(IplImage *card_y,
+                              CythonGroupedRects &cython_group,
+                              CythonGroupScores cython_scores,
+                              int *expiry_month,
+                              int *expiry_year) {
+  GroupedRects group = cythonGroupedRects_to_GroupedRects(&cython_group);
+
+  ExpiryGroupScores old_scores = cythonScores_to_ExpiryGroupScores(cython_group.scores);
+  
+  expiry_extract_group(card_y, group, old_scores, expiry_month, expiry_year);
+
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
+      cython_scores[character_index][digit_value] = group.scores(character_index, digit_value);
+    }
   }
 }
 #endif

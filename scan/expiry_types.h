@@ -98,6 +98,8 @@ typedef struct {
   int   left;
 } CythonCharacterRect;
 
+typedef float CythonGroupScores[kExpiryMaxValidLength][10];
+
 typedef struct {
   int     top;
   int     left;
@@ -105,10 +107,10 @@ typedef struct {
   int     height;
   int     character_width;
   
-  uint8_t pattern;
-  float   scores[kExpiryMaxValidLength][10];
-  int     recently_seen_count;
-  int     total_seen_count;
+  uint8_t           pattern;
+  CythonGroupScores scores;
+  int               recently_seen_count;
+  int               total_seen_count;
   
   int   number_of_character_rects;
   CythonCharacterRect *character_rects;

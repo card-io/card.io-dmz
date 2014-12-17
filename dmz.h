@@ -105,6 +105,11 @@ void dmz_expiry_extract(IplImage *card_y,
                         uint16_t *number_of_expiry_groups, CythonGroupedRects **cython_expiry_groups,
                         uint16_t *number_of_new_groups, CythonGroupedRects **cython_new_groups,
                         int *expiry_month, int *expiry_year);
+void dmz_expiry_extract_group(IplImage *card_y,
+                              CythonGroupedRects &cython_group,
+                              CythonGroupScores cython_scores,
+                              int *expiry_month,
+                              int *expiry_year);
 #endif
 
 

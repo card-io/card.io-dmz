@@ -63,7 +63,7 @@ IplImage *py_mz_create_from_cv_image_data(char *image_data, int image_size,
   // does not say anything at all about padding.
   //
   // For now, let's simply assert if there appears to be any padding:
-  if (step * height != image_size) {
+  if (image_size > 0 && step * height != image_size) {
     fprintf(stderr, "\nstep: %d, height: %d, image_size: %d => padding: %d\n", step, height, image_size, image_size/height % step);
     assert(FALSE);
   }

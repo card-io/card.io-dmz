@@ -91,6 +91,7 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   return probabilities;
 }
 
+
 DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y, IplImage *as_float, GroupedRects group, char *expiries_string) {
   std::vector<std::string> expiry_strings;
   std::vector<ExpiryGroupScores> probability_vector;
@@ -182,6 +183,7 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
   return probability_vector[0];
 }
 
+
 DMZ_INTERNAL void expiry_aggregate_grouped_rects(GroupedRectsList &aggregated_groups, GroupedRectsList &new_groups) {
   // Coalesce equivalent groups within new_groups (*** TODO *** IS THIS STEP EVER ACTUALLY NECESSARY? ***)
   for (size_t new_index_1 = 0; new_index_1 < new_groups.size(); new_index_1++) {
@@ -259,6 +261,121 @@ DMZ_INTERNAL void expiry_aggregate_grouped_rects(GroupedRectsList &aggregated_gr
 #endif
 }
 
+
+DMZ_INTERNAL void expiry_string_to_expiry_month_and_year(char *expiry_string, GroupedRects &group, int *expiry_month, int *expiry_year) {
+  int month = -1;
+  int year = -1;
+  
+  switch (group.pattern) {
+    case ExpiryPatternMMsYY:
+      if (expiry_string[0] != ' ' && expiry_string[1] != ' ' && expiry_string[3] != ' ' && expiry_string[4] != ' ') {
+        month = digit_to_int(expiry_string[0]) * 10 + digit_to_int(expiry_string[1]);
+        year = digit_to_int(expiry_string[3]) * 10 + digit_to_int(expiry_string[4]);
+      }
+      break;
+    case ExpiryPatternMMs20YY:
+    case ExpiryPatternXXsXXsYY:
+    case ExpiryPatternXXsXXs20YY:
+    case ExpiryPatternMMdMMsYY:
+    case ExpiryPatternMMdMMs20YY:
+    case ExpiryPatternMMsYYdMMsYY:
+    default:
+      break;
+  }
+  
+  // http://support.celerant.com/celwiki/index.php/Reverse_expiration_date suggests that non-US cards
+  // might sometimes reverse month and year. Since MMYY and YYMM are distinguishable as of 2013,
+  // and since we're going to ignore dates in the past, let's swap ours accordingly.
+  if (month > 12 && year > 0 && year <= 12) {
+    int temp = month;
+    month = year;
+    year = temp;
+  }
+  
+  // Only accept dates where month is in [1,12],
+  // and the date is >= the current month/year,
+  // and the year is within the next 5 years. (TODO: somehow determine whether 5 is a reasonable number)
+  // Ignore valid dates if they're no later than the best date we've already found.
+  int full_year = year + 2000;
+  if (month > 0 && month <= 12 &&
+      (full_year > *expiry_year || ((full_year == *expiry_year) && month > *expiry_month))) {
+    time_t now = time(NULL);
+    struct tm *time_struct = localtime(&now);
+    int current_year = time_struct->tm_year + 1900;
+    int current_month = time_struct->tm_mon + 1;
+    if (full_year < current_year + 5
+        && (full_year > current_year || (full_year == current_year && month >= current_month))
+        ) {
+      *expiry_month = month;
+      *expiry_year = full_year;
+    }
+#if DMZ_DEBUG || CYTHON_DMZ
+    else {
+      // For current testing, which includes several expired cards, allow dates in the past.
+      if (year > 60) {
+        full_year= year + 1900;
+      }
+      if (full_year < current_year + 5) {
+        *expiry_month = month;
+        *expiry_year = full_year;
+      }
+      else {
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+        dmz_debug_print("%02d/%04d is a disallowed date.\n", month, full_year);
+#endif
+      }
+    }
+#endif
+  }
+}
+
+
+DMZ_INTERNAL void get_stable_expiry_month_and_year(GroupedRects &group, int *expiry_month, int *expiry_year) {
+  char expiry_string[128];
+  memset(expiry_string, 0, sizeof(expiry_string));
+
+  for(uint8_t i = 0; i < group.character_rects.size(); i++) {
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+    switch (group.pattern) {
+      case ExpiryPatternMMsYY:
+        if (i == 2) {
+          dmz_debug_print("- ");
+          continue;
+        }
+        break;
+      case ExpiryPatternMMs20YY:
+      case ExpiryPatternXXsXXsYY:
+      case ExpiryPatternXXsXXs20YY:
+      case ExpiryPatternMMdMMsYY:
+      case ExpiryPatternMMdMMs20YY:
+      case ExpiryPatternMMsYYdMMsYY:
+      default:
+        break;
+    }
+#endif
+    ExpiryGroupScores::Index r, c;
+    float max_score = group.scores.row(i).maxCoeff(&r, &c);
+    float sum = group.scores.row(i).sum();
+    float stability = max_score / sum;
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+    dmz_debug_print("%d ", (int) ceilf(stability * 100));
+#endif
+    if (stability < kExpiryMinStability) {
+      expiry_string[i] = ' ';
+    }
+    else {
+      expiry_string[i] = (char) ((uint8_t)'0' + (uint8_t)c);
+    }
+  }
+  
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+  dmz_debug_print("\n");
+#endif
+  
+  expiry_string_to_expiry_month_and_year(expiry_string, group, expiry_month, expiry_year);
+}
+
+
 DMZ_INTERNAL void expiry_extract(IplImage *card_y,
                                  GroupedRectsList &expiry_groups,
                                  GroupedRectsList &new_groups,
@@ -298,111 +415,11 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
       // If we haven't yet seen this group at least 3 times, let's not trust it yet.
       continue;
     }
-    char expiry_string[128];
-    memset(expiry_string, 0, sizeof(expiry_string));
+    
 #if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
     dmz_debug_print("Expiry stability (Group %d): ", (int) (group - expiry_groups.begin()));
 #endif
-    for(uint8_t i = 0; i < group->character_rects.size(); i++) {
-#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
-      switch (group->pattern) {
-        case ExpiryPatternMMsYY:
-          if (i == 2) {
-            dmz_debug_print("- ");
-            continue;
-          }
-          break;
-        case ExpiryPatternMMs20YY:
-        case ExpiryPatternXXsXXsYY:
-        case ExpiryPatternXXsXXs20YY:
-        case ExpiryPatternMMdMMsYY:
-        case ExpiryPatternMMdMMs20YY:
-        case ExpiryPatternMMsYYdMMsYY:
-        default:
-          break;
-      }
-#endif
-      ExpiryGroupScores::Index r, c;
-      float max_score = group->scores.row(i).maxCoeff(&r, &c);
-      float sum = group->scores.row(i).sum();
-      float stability = max_score / sum;
-#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
-      dmz_debug_print("%d ", (int) ceilf(stability * 100));
-#endif
-      if (stability < kExpiryMinStability) {
-        expiry_string[i] = ' ';
-      }
-      else {
-        expiry_string[i] = (char) ((uint8_t)'0' + (uint8_t)c);
-      }
-    }
-#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
-    dmz_debug_print("\n");
-#endif
-
-    int month = -1;
-    int year = -1;
-    switch (group->pattern) {
-      case ExpiryPatternMMsYY:
-        if (expiry_string[0] != ' ' && expiry_string[1] != ' ' && expiry_string[3] != ' ' && expiry_string[4] != ' ') {
-          month = digit_to_int(expiry_string[0]) * 10 + digit_to_int(expiry_string[1]);
-          year = digit_to_int(expiry_string[3]) * 10 + digit_to_int(expiry_string[4]);
-        }
-        break;
-      case ExpiryPatternMMs20YY:
-      case ExpiryPatternXXsXXsYY:
-      case ExpiryPatternXXsXXs20YY:
-      case ExpiryPatternMMdMMsYY:
-      case ExpiryPatternMMdMMs20YY:
-      case ExpiryPatternMMsYYdMMsYY:
-      default:
-        break;
-    }
-    
-    // http://support.celerant.com/celwiki/index.php/Reverse_expiration_date suggests that non-US cards
-    // might sometimes reverse month and year. Since MMYY and YYMM are distinguishable as of 2013,
-    // and since we're going to ignore dates in the past, let's swap ours accordingly.
-    if (month > 12 && year > 0 && year <= 12) {
-      int temp = month;
-      month = year;
-      year = temp;
-    }
-    
-    // Only accept dates where month is in [1,12],
-    // and the date is >= the current month/year,
-    // and the year is within the next 5 years. (TODO: somehow determine whether 5 is a reasonable number)
-    // Ignore valid dates if they're no later than the best date we've already found.
-    int full_year = year + 2000;
-    if (month > 0 && month <= 12 &&
-        (full_year > *expiry_year || ((full_year == *expiry_year) && month > *expiry_month))) {
-      time_t now = time(NULL);
-      struct tm *time_struct = localtime(&now);
-      int current_year = time_struct->tm_year + 1900;
-      int current_month = time_struct->tm_mon + 1;
-      if (full_year < current_year + 5
-          && (full_year > current_year || (full_year == current_year && month >= current_month))
-      ) {
-        *expiry_month = month;
-        *expiry_year = full_year;
-      }
-#if DMZ_DEBUG || CYTHON_DMZ
-      else {
-        // For current testing, which includes several expired cards, allow dates in the past.
-        if (year > 60) {
-          full_year= year + 1900;
-        }
-        if (full_year < current_year + 5) {
-          *expiry_month = month;
-          *expiry_year = full_year;
-        }
-        else {
-#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
-          dmz_debug_print("%02d/%04d is a disallowed date.\n", month, full_year);
-#endif
-        }
-      }
-#endif
-    }
+    get_stable_expiry_month_and_year(*group, expiry_month, expiry_year);
   }
 
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
@@ -413,5 +430,26 @@ DMZ_INTERNAL void expiry_extract(IplImage *card_y,
   dmz_debug_print("Returning expiry %02d/%04d\n", *expiry_month, *expiry_year);
 #endif
 }
+
+
+#if CYTHON_DMZ
+DMZ_INTERNAL void expiry_extract_group(IplImage *card_y,
+                                       GroupedRects &group,
+                                       ExpiryGroupScores &old_scores,
+                                       int *expiry_month,
+                                       int *expiry_year) {
+  static IplImage *as_float = NULL;
+  if (as_float == NULL) {
+    as_float = cvCreateImage(cvSize(kTrimmedCharacterImageWidth, kTrimmedCharacterImageHeight), IPL_DEPTH_32F, 1);
+  }
+  
+  char expiries_string[8192];
+  group.scores = categorize_expiry_digits(card_y, as_float, group, expiries_string);
+
+  group.scores = (old_scores * kExpiryDecayFactor) + (group.scores * (1 - kExpiryDecayFactor));
+  
+  get_stable_expiry_month_and_year(group, expiry_month, expiry_year);
+}
+#endif
 
 #endif // COMPILE_DMZ
