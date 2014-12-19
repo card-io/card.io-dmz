@@ -16,8 +16,8 @@
 #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
-#include "models/expiry/modelc_e1533ae9.hpp"
 #include "models/expiry/modelc_ab0b6054.hpp"
+#include "models/expiry/modelc_d3fc216e.hpp"
 
 #define GROUPED_RECTS_VERTICAL_ALLOWANCE (kTrimmedCharacterImageHeight / 2)
 #define GROUPED_RECTS_HORIZONTAL_ALLOWANCE (kTrimmedCharacterImageWidth / 2)
