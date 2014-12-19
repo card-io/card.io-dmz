@@ -180,8 +180,17 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
     }
   }
   
-  // TODO: if we end up using more than one model, return their coalesced results
-  return probability_vector[0];
+  // Apply some weightings to the models, on the perhaps-mistaken belief
+  // that the newer models perform a bit better than the older ones.
+  float model_weighting[] = {0.3f, 0.7f};
+  assert(sizeof(model_weighting)/sizeof(float) == probability_vector.size());
+  
+  ExpiryGroupScores average_vector = ExpiryGroupScores::Zero();
+  for (int model_index = 0; model_index < probability_vector.size(); model_index++) {
+    average_vector += probability_vector[model_index] * model_weighting[model_index];
+  }
+  
+  return average_vector;
 }
 
 
