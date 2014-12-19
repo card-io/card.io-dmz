@@ -77,14 +77,15 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   assert(as_float->width * sizeof(float) == as_float->widthStep);
   Eigen::Map<DigitModelInput> digit_model_input((float *)as_float->imageData);
 
-//  probabilities.push_back(applyc_e1533ae9(digit_model_input));
-//#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-//  suseconds_t interval1 = dmz_debug_timer_print("apply model 0", 2);
-//#endif
-  
   probabilities.push_back(applyc_ab0b6054(digit_model_input));
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
   /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 1", 2);
+  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
+#endif
+  
+  probabilities.push_back(applyc_d3fc216e(digit_model_input));
+#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 2", 2);
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
 
