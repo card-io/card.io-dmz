@@ -18,6 +18,7 @@
 // digit categorizers
 #include "models/expiry/modelc_ab0b6054.hpp"
 #include "models/expiry/modelc_d3fc216e.hpp"
+#include "models/expiry/modelc_918daa9c.hpp"
 
 #define GROUPED_RECTS_VERTICAL_ALLOWANCE (kTrimmedCharacterImageHeight / 2)
 #define GROUPED_RECTS_HORIZONTAL_ALLOWANCE (kTrimmedCharacterImageWidth / 2)
@@ -88,17 +89,53 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 2", 2);
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
+  
+  probabilities.push_back(applyc_918daa9c(digit_model_input));
+#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 2", 2);
+  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
+#endif
+
+#define NUMBER_OF_MODELS 3
 
   return probabilities;
 }
 
+DMZ_INTERNAL inline ExpiryGroupScores combine_model_results(ExpiryGroupScores probability_vector[NUMBER_OF_MODELS]) {
+#if 0
+  // Arithmetric mean:
+  ExpiryGroupScores average_vector = ExpiryGroupScores::Zero();
+  for (int model_index = 0; model_index < NUMBER_OF_MODELS; model_index++) {
+    average_vector += probability_vector[model_index];
+  }
+  return average_vector / NUMBER_OF_MODELS;
+#else
+  // Geometric mean:
+  ExpiryGroupScores average_vector = ExpiryGroupScores::Ones();
+  for (int model_index = 0; model_index < NUMBER_OF_MODELS; model_index++) {
+    average_vector = average_vector.array() * probability_vector[model_index].array();
+  }
+  
+  double root_power = 1.0 / NUMBER_OF_MODELS;
+  
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    float sum = 0.0f;
+    for (int digit = 0; digit < 10; digit++) {
+      float nth_root = (float) pow(average_vector(character_index, digit), root_power);
+      average_vector(character_index, digit) = nth_root;
+      sum += nth_root;
+    }
+    for (int digit = 0; digit < 10; digit++) {
+      average_vector(character_index, digit) /= sum;
+    }
+  }
+  
+  return average_vector;
+#endif
+}
 
 DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y, IplImage *as_float, GroupedRects group, char *expiries_string) {
-  std::vector<std::string> expiry_strings;
-  std::vector<ExpiryGroupScores> probability_vector;
-  
-  char positions[256];
-  sprintf(positions, " top: %3d, left: %3d character-lefts:", group.top, group.left);
+  ExpiryGroupScores probability_vector[NUMBER_OF_MODELS + 1]; // one for each model, plus one for the combined results
   
   for (int character_index = 0; character_index < 5; character_index++) {
     if (character_index == 2) { // the slash character
@@ -110,30 +147,47 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
     prepare_image_for_cat(card_y, as_float, rect);
     std::vector<DigitProbabilities> probabilities = digit_probabilities(as_float);
     
+    for (int model_index = 0; model_index < NUMBER_OF_MODELS; model_index++) {
+      for (int digit_index = 0; digit_index < 10; digit_index++) {
+        probability_vector[model_index](character_index, digit_index) = probabilities[model_index](0, digit_index);
+      }
+    }
+  }
+
+  probability_vector[NUMBER_OF_MODELS] = combine_model_results(probability_vector);
+  
+#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  dmz_debug_timer_print("categorize character images", 2);
+#endif
+  
+#if DEBUG_EXPIRY_CATEGORIZATION_RESULTS
+  std::string expiry_strings[NUMBER_OF_MODELS + 1]; // one for each model, plus one for the combined results
+  
+  char positions[256];
+  sprintf(positions, "top: %3d, left: %3d character-lefts:", group.top, group.left);
+  for (int model_index = 0; model_index < NUMBER_OF_MODELS; model_index++) {
+    char header[64];
+    sprintf(header, "**/** Model %d ", model_index);
+    expiry_strings[model_index] = std::string(header);
+  }
+  expiry_strings[NUMBER_OF_MODELS] = std::string("**/** Combined");
+
+  for (int character_index = 0; character_index < 5; character_index++) {
+    if (character_index == 2) { // the slash character
+      continue;
+    }
+
+    CharacterRectListIterator rect = group.character_rects.begin() + character_index;
+    
     char position[32];
     sprintf(position, " %3d", rect->left);
     strcat(positions, position);
     
-    if (character_index == 0) {
-      ExpiryGroupScores scores;
-      for (int model_index = 0; model_index < probabilities.size(); model_index++) {
-        char header[64];
-        sprintf(header, "**/** Model %d ", model_index);
-        expiry_strings.push_back(std::string(header));
-        probability_vector.push_back(scores);
-      }
-      
-#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-      dmz_debug_timer_print("initialize expiry_strings", 2);
-#endif
-    }
-    
-    for (int model_index = 0; model_index < expiry_strings.size(); model_index++) {
+    for (int model_index = 0; model_index < NUMBER_OF_MODELS + 1; model_index++) {
       float max_probability = 0.0f;
       int most_probable_digit = -1;
       for (int digit_index = 0; digit_index < 10; digit_index++) {
-        float digit_probability = probabilities[model_index](0, digit_index);
-        probability_vector[model_index](character_index, digit_index) = digit_probability;
+        float digit_probability = probability_vector[model_index](character_index, digit_index);
         if (digit_probability > max_probability) {
           max_probability = digit_probability;
           most_probable_digit = digit_index;
@@ -146,22 +200,17 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
   }
   
   expiries_string[0] = '\0';
-  for (int model_index = 0; model_index < expiry_strings.size(); model_index++) {
-    if (strlen(expiries_string)) {
-      strcat(expiries_string, "\n");
-    }
-    strcat(expiries_string, expiry_strings[model_index].c_str());
-    strcat(expiries_string, positions);
-    strcat(expiries_string, "\n");
-    
-    strcat(expiries_string, "        ");
-    char label_string[32];
-    for (int char_label = 0; char_label < 10; char_label++) {
-      sprintf(label_string, "   %d  ", char_label);
-      strcat(expiries_string, label_string);
-    }
-    strcat(expiries_string, "\n");
-    
+  strcat(expiries_string, positions);
+
+  strcat(expiries_string, "\n        ");
+  char label_string[32];
+  for (int char_label = 0; char_label < 10; char_label++) {
+    sprintf(label_string, "   %d  ", char_label);
+    strcat(expiries_string, label_string);
+  }
+  strcat(expiries_string, "\n");
+  
+  for (int model_index = 0; model_index < NUMBER_OF_MODELS + 1; model_index++) {
     for (int character_index = 0; character_index < 5; character_index++) {
       if (character_index == 2) { // the slash character
         continue;
@@ -178,19 +227,17 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
       }
       strcat(expiries_string, "\n");
     }
+
+    strcat(expiries_string, expiry_strings[model_index].c_str());
+    strcat(expiries_string, "\n");
   }
   
-  // Apply some weightings to the models, on the perhaps-mistaken belief
-  // that the newer models perform a bit better than the older ones.
-  float model_weighting[] = {0.3f, 0.7f};
-  assert(sizeof(model_weighting)/sizeof(float) == probability_vector.size());
+ #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  dmz_debug_timer_print("prepare expiry strings", 2);
+ #endif
+#endif
   
-  ExpiryGroupScores average_vector = ExpiryGroupScores::Zero();
-  for (int model_index = 0; model_index < probability_vector.size(); model_index++) {
-    average_vector += probability_vector[model_index] * model_weighting[model_index];
-  }
-  
-  return average_vector;
+  return probability_vector[NUMBER_OF_MODELS];
 }
 
 
