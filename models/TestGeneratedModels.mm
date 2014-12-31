@@ -20,6 +20,7 @@
 #include "modelm_730c4cbd.hpp"
 #include "modelc_ab0b6054.hpp"
 #include "modelc_d3fc216e.hpp"
+#include "modelc_918daa9c.hpp"
 
 @implementation TestGeneratedModels
 
@@ -48,6 +49,7 @@ static BOOL failure = NO;
   SELF_CHECK_MODEL(passm_730c4cbd);
   SELF_CHECK_MODEL(passc_ab0b6054);
   SELF_CHECK_MODEL(passc_d3fc216e);
+  SELF_CHECK_MODEL(passc_918daa9c);
 #endif
 }
 
