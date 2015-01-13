@@ -16,11 +16,13 @@
 #include "modelc_01266c1b.hpp"
 #include "modelc_b00bf70c.hpp"
 
+#if SCAN_EXPIRY
 // expiry models
 #include "modelm_730c4cbd.hpp"
 #include "modelc_ab0b6054.hpp"
 #include "modelc_d3fc216e.hpp"
 #include "modelc_918daa9c.hpp"
+#endif
 
 @implementation TestGeneratedModels
 
