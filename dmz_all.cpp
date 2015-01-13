@@ -18,6 +18,10 @@
 #include "./dmz.cpp"
 #include "./dmz_olm.cpp"
 #include "./geometry.cpp"
+#include "./models/expiry/modelc_918daa9c.cpp"
+#include "./models/expiry/modelc_ab0b6054.cpp"
+#include "./models/expiry/modelc_d3fc216e.cpp"
+#include "./models/expiry/modelm_730c4cbd.cpp"
 #include "./models/generated/modelc_01266c1b.cpp"
 #include "./models/generated/modelc_5c241121.cpp"
 #include "./models/generated/modelc_b00bf70c.cpp"
@@ -25,21 +29,14 @@
 #include "./mz.cpp"
 #include "./mz_android.cpp"
 #include "./processor_support.cpp"
+#include "./scan/expiry_categorize.cpp"
+#include "./scan/expiry_seg.cpp"
 #include "./scan/frame.cpp"
 #include "./scan/n_categorize.cpp"
 #include "./scan/n_hseg.cpp"
 #include "./scan/n_vseg.cpp"
 #include "./scan/scan.cpp"
 #include "./scan/scan_analytics.cpp"
-
-  #if SCAN_EXPIRY
-  #include "./scan/expiry_categorize.cpp"
-  #include "./scan/expiry_seg.cpp"
-  #include "./models/expiry/modelc_918daa9c.cpp"
-  #include "./models/expiry/modelc_ab0b6054.cpp"
-  #include "./models/expiry/modelc_d3fc216e.cpp"
-  #include "./models/expiry/modelm_730c4cbd.cpp"
-  #endif
 
 #else
 
