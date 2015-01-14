@@ -54,11 +54,13 @@ void scanner_add_frame(ScannerState *state, IplImage *y, bool collect_expiry, Fr
     return;
   }
 
+#if SCAN_EXPIRY
   if (still_need_to_collect_expiry) {
     state->collect_expiry = true;
     expiry_extract(y, state->expiry_groups, result->expiry_groups, &state->expiry_month, &state->expiry_year);
     state->name_groups = result->name_groups;  // for now, for the debugging display
   }
+#endif
   
   if (still_need_to_collect_card_number) {
     if(result->hseg.n_offsets == 15) {
