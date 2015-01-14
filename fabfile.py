@@ -18,6 +18,7 @@ def concat():
     Regenerate dmz_all.cpp.
     """
     impl_files = []
+    expiry_impl_files = []
     for base_path, directories, filenames in os.walk("."):
         for filename in filenames:
             if filename == 'dmz_all.cpp':
@@ -32,13 +33,19 @@ def concat():
                     is_impl = True
             if not is_impl:
                 continue
+            
+            path = os.path.join(base_path, filename)
 
-            impl_files.append(os.path.join(base_path, filename))
+            if "expiry" in path:
+                expiry_impl_files.append(path)
+            else:
+                impl_files.append(path)
 
     # sort so that the output is consistently ordered
     impl_files = sorted(impl_files)
+    expiry_impl_files = sorted(expiry_impl_files)
 
-    include_lines = ["#include \"compile.h\"", ""]
+    include_lines = ["  #include \"compile.h\"", ""]
 
     include_lines.extend(["#ifndef DMZ_ALL_H", "#define DMZ_ALL_H 1", ""])
 
@@ -46,8 +53,13 @@ def concat():
                           
     for impl_file in impl_files:
         include_lines.append("#include \"{impl_file}\"".format(**locals()))
+    
+    include_lines.extend(["", "  #if SCAN_EXPIRY"])
+    for expiry_impl_file in expiry_impl_files:
+        include_lines.append("    #include \"{expiry_impl_file}\"".format(**locals()))
+    include_lines.append("  #endif")
 
-    include_lines.extend(["", "#else", "", "#include \"./dmz_olm.cpp\"", "#include \"./processor_support.cpp\"", "", "#endif  // COMPILE_DMZ"])
+    include_lines.extend(["", "#else", "", "  #include \"./dmz_olm.cpp\"", "  #include \"./processor_support.cpp\"", "", "#endif  // COMPILE_DMZ"])
 
     include_lines.extend(["", "#endif // DMZ_ALL_H"])
 
