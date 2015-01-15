@@ -35,6 +35,10 @@ void scanner_reset(ScannerState *state) {
 }
 
 void scanner_add_frame(ScannerState *state, IplImage *y, bool collect_expiry, FrameScanResult *result) {
+  scanner_add_frame_with_expiry(state, y, false, result);
+}
+
+void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool collect_expiry, FrameScanResult *result) {
 
   bool still_need_to_collect_card_number = (state->timeOfCardNumberCompletionInMilliseconds == 0);
   bool still_need_to_collect_expiry = collect_expiry && (state->expiry_month == 0 || state->expiry_year == 0);
