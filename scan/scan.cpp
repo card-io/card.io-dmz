@@ -34,7 +34,7 @@ void scanner_reset(ScannerState *state) {
   state->name_groups.clear();
 }
 
-void scanner_add_frame(ScannerState *state, IplImage *y, bool collect_expiry, FrameScanResult *result) {
+void scanner_add_frame(ScannerState *state, IplImage *y, FrameScanResult *result) {
   scanner_add_frame_with_expiry(state, y, false, result);
 }
 
