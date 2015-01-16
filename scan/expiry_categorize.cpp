@@ -16,9 +16,8 @@
 #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
-#include "models/expiry/modelc_ab0b6054.hpp"
-#include "models/expiry/modelc_d3fc216e.hpp"
 #include "models/expiry/modelc_918daa9c.hpp"
+#include "models/expiry/modelm_0ce5632a.hpp"
 
 #define GROUPED_RECTS_VERTICAL_ALLOWANCE (kTrimmedCharacterImageHeight / 2)
 #define GROUPED_RECTS_HORIZONTAL_ALLOWANCE (kTrimmedCharacterImageWidth / 2)
@@ -28,6 +27,7 @@
 
 #define digit_to_int(c) ((uint8_t)c - (uint8_t)'0')
 
+typedef Eigen::Matrix<float, 1, 176, Eigen::RowMajor> MLPModelInput;
 typedef Eigen::Matrix<float, 16, 11, Eigen::RowMajor> DigitModelInput;
 typedef Eigen::Matrix<float, 1, 10, Eigen::RowMajor> DigitProbabilities;
 
@@ -77,18 +77,7 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   std::vector<DigitProbabilities> probabilities;
   assert(as_float->width * sizeof(float) == as_float->widthStep);
   Eigen::Map<DigitModelInput> digit_model_input((float *)as_float->imageData);
-
-  probabilities.push_back(applyc_ab0b6054(digit_model_input));
-#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 1", 2);
-  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
-#endif
-  
-  probabilities.push_back(applyc_d3fc216e(digit_model_input));
-#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 2", 2);
-  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
-#endif
+  Eigen::Map<MLPModelInput> mlp_digit_model_input((float *)as_float->imageData);
   
   probabilities.push_back(applyc_918daa9c(digit_model_input));
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
@@ -96,7 +85,13 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
 
-#define NUMBER_OF_MODELS 3
+  probabilities.push_back(applym_0ce5632a(mlp_digit_model_input));
+#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 1", 2);
+  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
+#endif
+
+#define NUMBER_OF_MODELS 2
 
   return probabilities;
 }

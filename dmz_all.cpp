@@ -34,8 +34,7 @@
 
   #if SCAN_EXPIRY
     #include "./models/expiry/modelc_918daa9c.cpp"
-    #include "./models/expiry/modelc_ab0b6054.cpp"
-    #include "./models/expiry/modelc_d3fc216e.cpp"
+    #include "./models/expiry/modelm_0ce5632a.cpp"
     #include "./models/expiry/modelm_730c4cbd.cpp"
     #include "./scan/expiry_categorize.cpp"
     #include "./scan/expiry_seg.cpp"
