@@ -31,7 +31,7 @@ typedef struct {
 // Scans a single card image, returns a summary of all info gathered along the way.
 // If usable is false, disregard all other info.
 // y must be 428x270, uint8_t, no roi, single channel greyscale.
-DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool collect_expiry, FrameScanResult *result);
+DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool scan_expiry, FrameScanResult *result);
 
 #if CYTHON_DMZ
 typedef struct {

@@ -36,7 +36,7 @@ typedef struct {
   ScanSessionAnalytics session_analytics;
   ScannerResult successfulCardNumberResult;
   unsigned long timeOfCardNumberCompletionInMilliseconds;
-  bool collect_expiry;
+  bool scan_expiry;
   int expiry_month;
   int expiry_year;
   GroupedRectsList expiry_groups;
@@ -58,7 +58,7 @@ void scanner_reset(ScannerState *state);
 // - if the card appears to be upside down, result->upside_down
 //   will be set to true (and result->usable to false)
 void scanner_add_frame(ScannerState *state, IplImage *y, FrameScanResult *result); // pre-expiry backward-compatible version
-void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool collect_expiry, FrameScanResult *result);
+void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_expiry, FrameScanResult *result);
 
 // Ask the scanner for its number predictions.
 // If result.complete is false, the rest of the result must be ignored.

@@ -27,7 +27,7 @@ void scanner_reset(ScannerState *state) {
   state->aggregated16 = NumberScores::Zero();
   scan_analytics_init(&state->session_analytics);
   state->timeOfCardNumberCompletionInMilliseconds = 0;
-  state->collect_expiry = false;
+  state->scan_expiry = false;
   state->expiry_month = 0;
   state->expiry_year = 0;
   state->expiry_groups.clear();
@@ -38,14 +38,14 @@ void scanner_add_frame(ScannerState *state, IplImage *y, FrameScanResult *result
   scanner_add_frame_with_expiry(state, y, false, result);
 }
 
-void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool collect_expiry, FrameScanResult *result) {
+void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_expiry, FrameScanResult *result) {
 
   bool still_need_to_collect_card_number = (state->timeOfCardNumberCompletionInMilliseconds == 0);
-  bool still_need_to_collect_expiry = collect_expiry && (state->expiry_month == 0 || state->expiry_year == 0);
+  bool still_need_to_scan_expiry = scan_expiry && (state->expiry_month == 0 || state->expiry_year == 0);
 
   // Don't bother with a bunch of assertions about y here,
   // since the frame reader will make them anyway.
-  scan_card_image(y, still_need_to_collect_card_number, still_need_to_collect_expiry, result);
+  scan_card_image(y, still_need_to_collect_card_number, still_need_to_scan_expiry, result);
   if (result->upside_down) {
     return;
   }
@@ -59,8 +59,8 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool collec
   }
 
 #if SCAN_EXPIRY
-  if (still_need_to_collect_expiry) {
-    state->collect_expiry = true;
+  if (still_need_to_scan_expiry) {
+    state->scan_expiry = true;
     expiry_extract(y, state->expiry_groups, result->expiry_groups, &state->expiry_month, &state->expiry_year);
     state->name_groups = result->name_groups;  // for now, for the debugging display
   }
@@ -156,7 +156,7 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
   // Once the card number has been successfully scanned, then wait a bit longer for successful expiry scan (if collecting expiry)
   if (state->timeOfCardNumberCompletionInMilliseconds > 0) {
 #if SCAN_EXPIRY
-    if (state->collect_expiry) {
+    if (state->scan_expiry) {
 #else
     if (false) {
 #endif

@@ -21,7 +21,7 @@
 #define kMaxNumberScoreDelta 3 // non-lax value: 1? 2?
 #define kFlipVSegYOffsetCutoff ((kCreditCardTargetHeight - kNumberHeight) / 2)
 
-DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool collect_expiry, FrameScanResult *result) {
+DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool scan_expiry, FrameScanResult *result) {
   assert(NULL == y->roi);
   assert(y->width == 428);
   assert(y->height == 270);
@@ -69,7 +69,7 @@ DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool co
   }
 
 #if SCAN_EXPIRY
-  if (collect_expiry && result->vseg.y_offset < kCreditCardTargetHeight - 2 * kSmallCharacterHeight) {
+  if (scan_expiry && result->vseg.y_offset < kCreditCardTargetHeight - 2 * kSmallCharacterHeight) {
     best_expiry_seg(y, result->vseg.y_offset, result->expiry_groups, result->name_groups);
   #if DMZ_DEBUG
     if (result->expiry_groups.empty()) {
