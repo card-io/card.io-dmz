@@ -63,7 +63,7 @@ IplImage *py_mz_create_from_cv_image_data(char *image_data, int image_size,
   // does not say anything at all about padding.
   //
   // For now, let's simply assert if there appears to be any padding:
-  if (step * height != image_size) {
+  if (image_size > 0 && step * height != image_size) {
     fprintf(stderr, "\nstep: %d, height: %d, image_size: %d => padding: %d\n", step, height, image_size, image_size/height % step);
     assert(FALSE);
   }
@@ -96,6 +96,19 @@ void py_mz_get_cv_image_data(IplImage *source,
     *roi_width = roi.width;
     *roi_height = roi.height;
 }
+
+void py_mz_cvSetImageROI(IplImage* image, int left, int top, int width, int height) {
+  cvSetImageROI(image, cvRect(left, top, width, height));
+}
+
+void py_mz_cvResetImageROI(IplImage* image) {
+  cvResetImageROI(image);
+}
+
+//void py_mz_expiry_fill_borders(IplImage *character_image_float, int char_top, int char_left) {
+//  expiry_fill_borders(character_image_float, char_top, char_left);
+//}
+
 
 #endif
 

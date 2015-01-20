@@ -1,4 +1,4 @@
-#include "compile.h"
+  #include "compile.h"
 
 #ifndef DMZ_ALL_H
 #define DMZ_ALL_H 1
@@ -32,10 +32,18 @@
 #include "./scan/scan.cpp"
 #include "./scan/scan_analytics.cpp"
 
+  #if SCAN_EXPIRY
+    #include "./models/expiry/modelc_5cff994c.cpp"
+    #include "./models/expiry/modelm_730c4cbd.cpp"
+    #include "./models/expiry/modelm_e43af6f6.cpp"
+    #include "./scan/expiry_categorize.cpp"
+    #include "./scan/expiry_seg.cpp"
+  #endif
+
 #else
 
-#include "./dmz_olm.cpp"
-#include "./processor_support.cpp"
+  #include "./dmz_olm.cpp"
+  #include "./processor_support.cpp"
 
 #endif  // COMPILE_DMZ
 

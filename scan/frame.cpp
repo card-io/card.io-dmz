@@ -21,7 +21,7 @@
 #define kMaxNumberScoreDelta 3 // non-lax value: 1? 2?
 #define kFlipVSegYOffsetCutoff ((kCreditCardTargetHeight - kNumberHeight) / 2)
 
-DMZ_INTERNAL void scan_card_image(IplImage *y, FrameScanResult *result) {
+DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool scan_expiry, FrameScanResult *result) {
   assert(NULL == y->roi);
   assert(y->width == 428);
   assert(y->height == 270);
@@ -46,26 +46,38 @@ DMZ_INTERNAL void scan_card_image(IplImage *y, FrameScanResult *result) {
     return;
   }
 
-  cvSetImageROI(y, cvRect(0, result->vseg.y_offset, kCreditCardTargetWidth, kNumberHeight));
-  
-  result->hseg = best_n_hseg(y, result->vseg);
-  // I've not found the hseg score to be a reliable indicator of quality at all
-  // Unsurprising, since this is the hardest phase of the pipeline, and we're struggling
-  // just to find anything at all!
-  //
-  //  if(!result->usable) {
-  //    cvResetImageROI(y);
-  //    return result;
-  //  }
-  
-  result->scores = number_scores(y, result->hseg);
-  float number_score = result->hseg.n_offsets - result->scores.sum();
-  result->usable = number_score < kMaxNumberScoreDelta;
-  if (!result->usable) {
-    dmz_debug_log("number_score %f unusable", number_score);
+  if (collect_card_number) {
+    cvSetImageROI(y, cvRect(0, result->vseg.y_offset, kCreditCardTargetWidth, kNumberHeight));
+    
+    result->hseg = best_n_hseg(y, result->vseg);
+    // I've not found the hseg score to be a reliable indicator of quality at all
+    // Unsurprising, since this is the hardest phase of the pipeline, and we're struggling
+    // just to find anything at all!
+    //
+    //  if(!result->usable) {
+    //    cvResetImageROI(y);
+    //    return result;
+    //  }
+    
+    result->scores = number_scores(y, result->hseg);
+    float number_score = result->hseg.n_offsets - result->scores.sum();
+    result->usable = number_score < kMaxNumberScoreDelta;
+    if (!result->usable) {
+      dmz_debug_log("number_score %f unusable", number_score);
+    }
+    cvResetImageROI(y);
   }
-  cvResetImageROI(y);
 
+#if SCAN_EXPIRY
+  if (scan_expiry && result->vseg.y_offset < kCreditCardTargetHeight - 2 * kSmallCharacterHeight) {
+    best_expiry_seg(y, result->vseg.y_offset, result->expiry_groups, result->name_groups);
+  #if DMZ_DEBUG
+    if (result->expiry_groups.empty()) {
+      dmz_debug_log("Expiry segmentation failed.");
+    }
+  #endif
+  }
+#endif
 }
 
 #if CYTHON_DMZ
@@ -78,7 +90,7 @@ void cython_scan_card_image(IplImage *y, CythonFrameScanResult *result) {
   frameScanResult.torch_is_on = 0;
   frameScanResult.flipped = 0;
 
-  scan_card_image(y, &frameScanResult);
+  scan_card_image(y, true, true, &frameScanResult);
   
   result->usable = frameScanResult.usable;
   result->hseg = frameScanResult.hseg;

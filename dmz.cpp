@@ -476,4 +476,163 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
   llcv_unwarp(dmz, sample, src_points, dst_rect, *transformed);
 }
 
+// FOR CYTHON USE ONLY
+#if CYTHON_DMZ
+void dmz_scharr3_dx_abs(IplImage *src, IplImage *dst) {
+  llcv_scharr3_dx_abs(src, dst);
+}
+
+// FOR CYTHON USE ONLY
+void dmz_scharr3_dy_abs(IplImage *src, IplImage *dst) {
+  llcv_scharr3_dy_abs(src, dst);
+}
+
+// FOR CYTHON USE ONLY
+void dmz_sobel3_dx_dy(IplImage *src, IplImage *dst) {
+  llcv_sobel3_dx_dy(src, dst);
+}
+
+// FOR CYTHON USE ONLY
+ExpiryGroupScores cythonScores_to_ExpiryGroupScores(CythonGroupScores cython_scores) {
+  ExpiryGroupScores scores;
+  
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
+      scores(character_index, digit_value) = cython_scores[character_index][digit_value];
+    }
+  }
+  
+  return scores;
+}
+
+// FOR CYTHON USE ONLY
+CythonGroupedRects groupedRects_to_CythonGroupedRects(GroupedRectsListIterator group) {
+  CythonGroupedRects cython_expiry_group;
+  int character_index;
+  int digit_value;
+  
+  cython_expiry_group.top = group->top;
+  cython_expiry_group.left = group->left;
+  cython_expiry_group.width = group->width;
+  cython_expiry_group.height = group->height;
+  cython_expiry_group.character_width = group->character_width;
+  cython_expiry_group.pattern = group->pattern;
+
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
+      cython_expiry_group.scores[character_index][digit_value] = group->scores(character_index, digit_value);
+    }
+  }
+  
+  cython_expiry_group.recently_seen_count = group->recently_seen_count;
+  cython_expiry_group.total_seen_count = group->total_seen_count;
+  
+  cython_expiry_group.number_of_character_rects = group->character_rects.size();
+  size_t character_rects_size = (group->character_rects.size() * sizeof(CythonCharacterRect));
+  cython_expiry_group.character_rects = (CythonCharacterRect *) malloc(character_rects_size);
+  
+  for (character_index = 0; character_index < group->character_rects.size(); ++character_index) {
+    cython_expiry_group.character_rects[character_index].top = group->character_rects[character_index].top;
+    cython_expiry_group.character_rects[character_index].left = group->character_rects[character_index].left;
+  }
+
+  return cython_expiry_group;
+}
+
+// FOR CYTHON USE ONLY
+GroupedRects cythonGroupedRects_to_GroupedRects(CythonGroupedRects *cython_group) {
+  GroupedRects group;
+  
+  group.top = cython_group->top;
+  group.left = cython_group->left;
+  group.width = cython_group->width;
+  group.height = cython_group->height;
+  group.character_width = cython_group->character_width;
+  group.pattern = (ExpiryPattern) cython_group->pattern;
+  group.scores = cythonScores_to_ExpiryGroupScores(cython_group->scores);
+  group.recently_seen_count = cython_group->recently_seen_count;
+  group.total_seen_count = cython_group->total_seen_count;
+  
+  for (int character_index = 0; character_index < cython_group->number_of_character_rects; character_index++) {
+    CythonCharacterRect cython_rect = cython_group->character_rects[character_index];
+    CharacterRect rect = CharacterRect(cython_rect.top, cython_rect.left, 0);
+    group.character_rects.push_back(rect);
+  }
+  
+  return group;
+}
+
+// FOR CYTHON USE ONLY
+#include "scan/expiry_seg.h"
+void dmz_best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, CythonGroupedRects **cython_expiry_groups, uint16_t *number_of_groups) {
+  GroupedRectsList expiry_groups;
+  GroupedRectsList name_groups;
+  
+  best_expiry_seg(card_y, starting_y_offset, expiry_groups, name_groups);
+
+  *cython_expiry_groups = (CythonGroupedRects *) malloc(expiry_groups.size() * sizeof(CythonGroupedRects));
+  
+  GroupedRectsListIterator group;
+  int index;
+  for (group = expiry_groups.begin(), index = 0; group != expiry_groups.end(); ++group, ++index) {
+    (*cython_expiry_groups)[index] = groupedRects_to_CythonGroupedRects(group);
+  }
+  
+  *number_of_groups = expiry_groups.size();
+}
+
+#include "scan/expiry_categorize.h"
+
+// FOR CYTHON USE ONLY
+void dmz_expiry_extract(IplImage *card_y,
+                        uint16_t *number_of_expiry_groups, CythonGroupedRects **cython_expiry_groups,
+                        uint16_t *number_of_new_groups, CythonGroupedRects **cython_new_groups,
+                        int *expiry_month, int *expiry_year) {
+  GroupedRectsList expiry_groups;
+  GroupedRectsList new_groups;
+  uint16_t index;
+  
+  for (index = 0; index < *number_of_expiry_groups; index++) {
+    expiry_groups.push_back(cythonGroupedRects_to_GroupedRects(*cython_expiry_groups + index));
+  }
+  
+  for (index = 0; index < *number_of_new_groups; index++) {
+    new_groups.push_back(cythonGroupedRects_to_GroupedRects(*cython_new_groups + index));
+  }
+  
+  expiry_extract(card_y, expiry_groups, new_groups, expiry_month, expiry_year);
+  
+  *number_of_expiry_groups = expiry_groups.size();
+  
+//  for (index = 0; index < *number_of_expiry_groups; index++) {
+//    free((*cython_expiry_groups)[index].character_rects);
+//  }
+  
+  *cython_expiry_groups = (CythonGroupedRects *) realloc(*cython_expiry_groups, expiry_groups.size() * sizeof(CythonGroupedRects));
+  
+  GroupedRectsListIterator group;
+  for (group = expiry_groups.begin(), index = 0; group != expiry_groups.end(); ++group, ++index) {
+    (*cython_expiry_groups)[index] = groupedRects_to_CythonGroupedRects(group);
+  }
+}
+
+void dmz_expiry_extract_group(IplImage *card_y,
+                              CythonGroupedRects &cython_group,
+                              CythonGroupScores cython_scores,
+                              int *expiry_month,
+                              int *expiry_year) {
+  GroupedRects group = cythonGroupedRects_to_GroupedRects(&cython_group);
+
+  ExpiryGroupScores old_scores = cythonScores_to_ExpiryGroupScores(cython_group.scores);
+  
+  expiry_extract_group(card_y, group, old_scores, expiry_month, expiry_year);
+
+  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
+    for (int digit_value = 0; digit_value < 10; digit_value++) {
+      cython_scores[character_index][digit_value] = group.scores(character_index, digit_value);
+    }
+  }
+}
+#endif
+
 #endif // COMPILE_DMZ

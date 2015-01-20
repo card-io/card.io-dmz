@@ -285,7 +285,7 @@ struct assign_impl<Derived1, Derived2, DefaultTraversal, InnerUnrolling, Version
     const Index outerSize = dst.outerSize();
     for(Index outer = 0; outer < outerSize; ++outer)
       assign_DefaultTraversal_InnerUnrolling<Derived1, Derived2, 0, Derived1::InnerSizeAtCompileTime>
-        ::run(dst, src, outer);
+        ::run(dst, src, (int)outer);
   }
 };
 
