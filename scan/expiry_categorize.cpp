@@ -16,8 +16,8 @@
 #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
-#include "models/expiry/modelc_5cff994c.hpp"
-#include "models/expiry/modelm_e43af6f6.hpp"
+#include "models/expiry/modelc_13a159cd.hpp"
+#include "models/expiry/modelm_95f644e2.hpp"
 
 #define GROUPED_RECTS_VERTICAL_ALLOWANCE (kTrimmedCharacterImageHeight / 2)
 #define GROUPED_RECTS_HORIZONTAL_ALLOWANCE (kTrimmedCharacterImageWidth / 2)
@@ -76,18 +76,18 @@ DMZ_INTERNAL void prepare_image_for_cat(IplImage *image, IplImage *as_float, Cha
 DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage *as_float) {
   std::vector<DigitProbabilities> probabilities;
   assert(as_float->width * sizeof(float) == as_float->widthStep);
-  Eigen::Map<DigitModelInput> digit_model_input((float *)as_float->imageData);
+  Eigen::Map<DigitModelInput> conv_digit_model_input((float *)as_float->imageData);
   Eigen::Map<MLPModelInput> mlp_digit_model_input((float *)as_float->imageData);
   
-  probabilities.push_back(applyc_5cff994c(digit_model_input));
+  probabilities.push_back(applyc_13a159cd(conv_digit_model_input));
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 2", 2);
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 3", 2);
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
-
-  probabilities.push_back(applym_e43af6f6(mlp_digit_model_input));
+  
+  probabilities.push_back(applym_95f644e2(mlp_digit_model_input));
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 1", 2);
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 4", 2);
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
 

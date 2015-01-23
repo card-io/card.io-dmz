@@ -19,8 +19,8 @@
 #if SCAN_EXPIRY
 // expiry models
 #include "modelm_730c4cbd.hpp"
-#include "modelm_e43af6f6.hpp"
-#include "modelc_5cff994c.hpp"
+#include "modelm_95f644e2.hpp"
+#include "modelc_13a159cd.hpp
 #endif
 
 @implementation TestGeneratedModels
@@ -48,8 +48,8 @@ static BOOL failure = NO;
 + (void)testExpiryModels {
 #if SCAN_EXPIRY
   SELF_CHECK_MODEL(passm_730c4cbd);
-  SELF_CHECK_MODEL(passc_e43af6f6);
-  SELF_CHECK_MODEL(passc_5cff994c);
+  SELF_CHECK_MODEL(passm_95f644e2);
+  SELF_CHECK_MODEL(passc_13a159cd);
 #endif
 }
 
