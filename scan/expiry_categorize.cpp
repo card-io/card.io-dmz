@@ -16,6 +16,7 @@
 #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
+#include "models/expiry/modelc_b14a5bff.hpp"
 #include "models/expiry/modelc_13a159cd.hpp"
 #include "models/expiry/modelm_95f644e2.hpp"
 
@@ -90,8 +91,14 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 4", 2);
   //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
 #endif
+  
+  probabilities.push_back(applyc_b14a5bff(conv_digit_model_input));
+#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
+  /*suseconds_t interval2 = */ dmz_debug_timer_print("apply model 3", 2);
+  //  dmz_debug_print("Faster: %d, %.2f\n", interval1 - interval2, ((float)interval2) / ((float)interval1));
+#endif
 
-#define NUMBER_OF_MODELS 2
+#define NUMBER_OF_MODELS 3
 
   return probabilities;
 }
