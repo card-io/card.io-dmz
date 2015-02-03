@@ -12,11 +12,11 @@
 #include "cv/stats.h"
 #include <time.h>
 
-#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 1
+//#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 1
 #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
 
 // digit categorizers
-#include "models/expiry/modelc_9ef06a97.hpp"
+#include "models/expiry/modelc_bf4dd6c8.hpp"
 #include "models/expiry/modelc_13a159cd.hpp"
 #include "models/expiry/modelm_95f644e2.hpp"
 
@@ -94,11 +94,10 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   interval[1] = dmz_debug_timer_print("apply model 1", 2);
 #endif
   
-  probabilities.push_back(applyc_9ef06a97(conv_digit_model_input));
+  probabilities.push_back(applyc_bf4dd6c8(conv_digit_model_input));
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
   interval[2] = dmz_debug_timer_print("apply model 2", 2);
 #endif
-
 
 #define NUMBER_OF_MODELS 3
 

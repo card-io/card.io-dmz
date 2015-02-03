@@ -33,7 +33,7 @@
 #include "./scan/scan_analytics.cpp"
 
   #if SCAN_EXPIRY
-    #include "./models/expiry/modelc_9ef06a97.cpp"
+    #include "./models/expiry/modelc_bf4dd6c8.cpp"
     #include "./models/expiry/modelc_13a159cd.cpp"
     #include "./models/expiry/modelm_95f644e2.cpp"
     #include "./models/expiry/modelm_730c4cbd.cpp"
