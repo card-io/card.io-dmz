@@ -1,0 +1,34 @@
+Notes on building DMZ for Cython
+--------------------------------
+
+Dave, 5/21/2014
+---------------
+- Download opencv-2.4.9 from http://opencv.org/downloads.html
+- In the `build_opencv.sh` script, for the xcodebuild command, delete apparently obsolete reference to opencv_lapack.
+- From the clearcut/dmz directory, run:
+	./build_opencv.sh /Users/dgoldman/Projects/clearcut/dmz/opencv-2.4.9
+=>
+1. Takes a LONG time (> an hour) to build the many CUDA-related files.
+2. Failed to link `gpu_perf4au`:
+	Undefined symbols for architecture x86_64:
+	Mostly symbols from stdlib, but also many from CUDA.
+3. HOWEVER, prior to that lengthy gpu_perf4au build, apparently succeeded in building the two desired libraries:
+		libopencv_core.a
+		libopencv_imgproc.a
+	They ended up in <temp build directory>/lib/Release/
+=>
+- Manually copy these two libraries to /Users/dgoldman/Projects/clearcut/dmz/opencv/lib (replacing out-of-date libs there).
+- Try running Cython script
+=>
+1. Warning (i386 vs. x86_64):
+	ld: warning: ld: warning: ignoring file /Users/dgoldman/Projects/clearcut/dmz/opencv/lib/libopencv_imgproc.a, file was built for archive which is not the architecture being linked (i386): /Users/dgoldman/Projects/clearcut/dmz/opencv/lib/libopencv_imgproc.aignoring file /Users/dgoldman/Projects/clearcut/dmz/opencv/lib/libopencv_core.a, file was built for archive which is not the architecture being linked (i386): /Users/dgoldman/Projects/clearcut/dmz/opencv/lib/libopencv_core.a
+
+2. Error:
+	ImportError: Building module dmz.dmz failed: ['ImportError: dlopen(/Users/dgoldman/.pyxbld/lib.macosx-10.9-x86_64-2.7/dmz/dmz.so, 2): Symbol not found: ___cudaRegisterFatBinary\n  Referenced from: /Users/dgoldman/.pyxbld/lib.macosx-10.9-x86_64-2.7/dmz/dmz.so\n  Expected in: flat namespace\n in /Users/dgoldman/.pyxbld/lib.macosx-10.9-x86_64-2.7/dmz/dmz.so\n']
+=>
+- Add CUDA_LIB to dmz.pyxbld
+=>
+That seems to have fixed the CUDA error!
+=>
+Regarding error #2, for now remove the references to the 64-bit versions of libopencv_core.a and libopencv_imgproc.a,
+and simply allow Cython to use whichever 32-bit versions it is finding somewhere else.
