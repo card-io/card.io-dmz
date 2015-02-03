@@ -1,0 +1,107 @@
+#!/usr/bin/python env
+
+import fnmatch
+import glob
+import os
+import os.path
+
+from Cython.Distutils.extension import Extension
+
+from ll.util.process import run_command
+
+
+##### HACK -- prevent annoying, stupid compiler warnings by monkey patching distutils
+##### Works around http://bugs.python.org/issue9031
+
+import distutils.sysconfig
+
+
+def remove_word_from_string(s, word):
+    words = s.split()
+    word_remains = True
+    while word_remains:
+        try:
+            words.remove(word)
+        except ValueError:
+            word_remains = False
+    return " ".join(words)
+
+
+def filter_strict_prototypes_from_get_config_vars(old_get_config_vars_function):
+    def new_get_config_vars_function(*config_vars):
+        results = old_get_config_vars_function(*config_vars)
+        if isinstance(results, (tuple, list)):
+            results = [remove_word_from_string(result, "-Wstrict-prototypes") if config_var == "CFLAGS" else result
+                       for result, config_var in zip(results, config_vars)]
+        return results
+    return new_get_config_vars_function
+
+distutils.sysconfig.get_config_vars = filter_strict_prototypes_from_get_config_vars(distutils.sysconfig.get_config_vars)
+
+##### END HACK
+
+##### HACK #2 -- prevent a few more compiler warnings, depending on compiler version
+
+
+def is_compiler_clang():
+    return 'clang' in distutils.sysconfig.get_config_var('CC')
+
+##### END HACK #2
+
+
+def recursive_glob(search_path, filename_glob):
+    matching_filenames = set()
+    for root, dirs, files in os.walk(search_path):
+        matching_filenames.update([os.path.join(root, filename) for filename in fnmatch.filter(files, filename_glob)])
+    return list(matching_filenames)
+
+DMZ_ROOT = os.path.realpath(os.path.dirname(__file__))
+# OPENCV_LIB = "/usr/local/opt/opencv/lib/"
+CUDA_LIB = "/Developer/NVIDIA/CUDA-6.0/lib/"
+
+
+def make_ext(module_name, pyx_filename):
+    pyx_filename = os.path.basename(pyx_filename)
+    assert pyx_filename == "dmz.pyx"
+    assert module_name.endswith("dmz")
+
+    # ensure that dmz_all.cpp is up to date:
+    former_dir = os.getcwd()
+    os.chdir('./dmz/card.io-dmz')
+    run_command('fab concat')
+    os.chdir(former_dir)
+
+    h_files = recursive_glob(os.path.join(DMZ_ROOT, "card.io-dmz"), "*.h")
+    c_files = [os.path.join(DMZ_ROOT, "card.io-dmz", "dmz_all.cpp")]
+
+    #opencv_lib_files_glob = os.path.join(DMZ_ROOT, "opencv", "lib", "*.a")
+    #opencv_lib_files = glob.glob(opencv_lib_files_glob)
+    opencv_lib_files = []
+    
+    cuda_lib_files_glob = os.path.join(CUDA_LIB, "*.a")
+    cuda_lib_files = glob.glob(cuda_lib_files_glob)
+
+    extra_compile_args = ["-Wno-unused-function",
+                          "-Wno-shorten-64-to-32",
+                          "-Wno-unused-variable",
+                          "-O0",
+                          ]
+    if is_compiler_clang():
+        extra_compile_args.extend(["-Wno-ignored-attributes",
+                                   "-Wno-self-assign",
+                                   ])
+
+    return Extension(name=module_name,
+                     sources=[pyx_filename] + c_files,
+                     language="c++",
+                     depends=h_files + c_files + [pyx_filename],
+                     define_macros=[('CYTHON_DMZ', '1'), ],
+                     pyrex_c_in_temp=True,
+                     pyrex_cplus=True,
+                     extra_objects=opencv_lib_files + cuda_lib_files,
+                     extra_compile_args=extra_compile_args
+                     )
+
+
+def make_setup_args():
+    return {"include_dirs": [os.path.join(DMZ_ROOT, include_dir) for include_dir in ("card.io-dmz", "opencv/include")], }
