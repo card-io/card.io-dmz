@@ -23,6 +23,9 @@ def concat():
         for filename in filenames:
             if filename == 'dmz_all.cpp':
                 continue
+
+            if "cython_dmz" in base_path:
+                continue
                 
             if base_path.startswith("./.git/"):
                 continue
