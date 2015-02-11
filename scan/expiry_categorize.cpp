@@ -12,8 +12,10 @@
 #include "cv/stats.h"
 #include <time.h>
 
-//#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 1
-#define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
+#if DMZ_DEBUG
+  //#define DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE 1
+  #define DEBUG_EXPIRY_CATEGORIZATION_RESULTS 1
+#endif
 
 // digit categorizers
 //#include "models/expiry/bisectors/a/modelm_d38dff65.hpp"
