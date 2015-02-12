@@ -278,21 +278,21 @@ template<typename _MatrixType, unsigned int _Mode> class TriangularView
 
     /** Efficient triangular matrix times vector/matrix product */
     template<typename OtherDerived>
-    TriangularProduct<Mode,true,MatrixType,false,OtherDerived, OtherDerived::IsVectorAtCompileTime>
+    TriangularProduct<Mode, true, MatrixType, false, OtherDerived, OtherDerived::ColsAtCompileTime==1>
     operator*(const MatrixBase<OtherDerived>& rhs) const
     {
       return TriangularProduct
-              <Mode,true,MatrixType,false,OtherDerived,OtherDerived::IsVectorAtCompileTime>
+              <Mode, true, MatrixType, false, OtherDerived, OtherDerived::ColsAtCompileTime==1>
               (m_matrix, rhs.derived());
     }
 
     /** Efficient vector/matrix times triangular matrix product */
     template<typename OtherDerived> friend
-    TriangularProduct<Mode,false,OtherDerived,OtherDerived::IsVectorAtCompileTime,MatrixType,false>
+    TriangularProduct<Mode, false, OtherDerived, OtherDerived::RowsAtCompileTime==1, MatrixType, false>
     operator*(const MatrixBase<OtherDerived>& lhs, const TriangularView& rhs)
     {
       return TriangularProduct
-              <Mode,false,OtherDerived,OtherDerived::IsVectorAtCompileTime,MatrixType,false>
+              <Mode, false, OtherDerived, OtherDerived::RowsAtCompileTime==1, MatrixType, false>
               (lhs.derived(),rhs.m_matrix);
     }
 
@@ -380,19 +380,19 @@ template<typename _MatrixType, unsigned int _Mode> class TriangularView
     EIGEN_STRONG_INLINE TriangularView& operator=(const ProductBase<ProductDerived, Lhs,Rhs>& other)
     {
       setZero();
-      return assignProduct(other,1);
+      return assignProduct(other.derived(),1);
     }
     
     template<typename ProductDerived, typename Lhs, typename Rhs>
     EIGEN_STRONG_INLINE TriangularView& operator+=(const ProductBase<ProductDerived, Lhs,Rhs>& other)
     {
-      return assignProduct(other,1);
+      return assignProduct(other.derived(),1);
     }
     
     template<typename ProductDerived, typename Lhs, typename Rhs>
     EIGEN_STRONG_INLINE TriangularView& operator-=(const ProductBase<ProductDerived, Lhs,Rhs>& other)
     {
-      return assignProduct(other,-1);
+      return assignProduct(other.derived(),-1);
     }
     
     
@@ -400,25 +400,34 @@ template<typename _MatrixType, unsigned int _Mode> class TriangularView
     EIGEN_STRONG_INLINE TriangularView& operator=(const ScaledProduct<ProductDerived>& other)
     {
       setZero();
-      return assignProduct(other,other.alpha());
+      return assignProduct(other.derived(),other.alpha());
     }
     
     template<typename ProductDerived>
     EIGEN_STRONG_INLINE TriangularView& operator+=(const ScaledProduct<ProductDerived>& other)
     {
-      return assignProduct(other,other.alpha());
+      return assignProduct(other.derived(),other.alpha());
     }
     
     template<typename ProductDerived>
     EIGEN_STRONG_INLINE TriangularView& operator-=(const ScaledProduct<ProductDerived>& other)
     {
-      return assignProduct(other,-other.alpha());
+      return assignProduct(other.derived(),-other.alpha());
     }
     
   protected:
     
     template<typename ProductDerived, typename Lhs, typename Rhs>
     EIGEN_STRONG_INLINE TriangularView& assignProduct(const ProductBase<ProductDerived, Lhs,Rhs>& prod, const Scalar& alpha);
+    
+    template<int Mode, bool LhsIsTriangular,
+         typename Lhs, bool LhsIsVector,
+         typename Rhs, bool RhsIsVector>
+    EIGEN_STRONG_INLINE TriangularView& assignProduct(const TriangularProduct<Mode, LhsIsTriangular, Lhs, LhsIsVector, Rhs, RhsIsVector>& prod, const Scalar& alpha)
+    {
+      lazyAssign(alpha*prod.eval());
+      return *this;
+    }
 
     MatrixTypeNested m_matrix;
 };
@@ -511,6 +520,7 @@ template<typename Derived1, typename Derived2, bool ClearOpposite>
 struct triangular_assignment_selector<Derived1, Derived2, StrictlyUpper, Dynamic, ClearOpposite>
 {
   typedef typename Derived1::Index Index;
+  typedef typename Derived1::Scalar Scalar;
   static inline void run(Derived1 &dst, const Derived2 &src)
   {
     for(Index j = 0; j < dst.cols(); ++j)
@@ -520,7 +530,7 @@ struct triangular_assignment_selector<Derived1, Derived2, StrictlyUpper, Dynamic
         dst.copyCoeff(i, j, src);
       if (ClearOpposite)
         for(Index i = maxi; i < dst.rows(); ++i)
-          dst.coeffRef(i, j) = 0;
+          dst.coeffRef(i, j) = Scalar(0);
     }
   }
 };
@@ -778,22 +788,23 @@ MatrixBase<Derived>::triangularView() const
   * \sa isLowerTriangular()
   */
 template<typename Derived>
-bool MatrixBase<Derived>::isUpperTriangular(RealScalar prec) const
+bool MatrixBase<Derived>::isUpperTriangular(const RealScalar& prec) const
 {
+  using std::abs;
   RealScalar maxAbsOnUpperPart = static_cast<RealScalar>(-1);
   for(Index j = 0; j < cols(); ++j)
   {
     Index maxi = (std::min)(j, rows()-1);
     for(Index i = 0; i <= maxi; ++i)
     {
-      RealScalar absValue = internal::abs(coeff(i,j));
+      RealScalar absValue = abs(coeff(i,j));
       if(absValue > maxAbsOnUpperPart) maxAbsOnUpperPart = absValue;
     }
   }
   RealScalar threshold = maxAbsOnUpperPart * prec;
   for(Index j = 0; j < cols(); ++j)
     for(Index i = j+1; i < rows(); ++i)
-      if(internal::abs(coeff(i, j)) > threshold) return false;
+      if(abs(coeff(i, j)) > threshold) return false;
   return true;
 }
 
@@ -803,13 +814,14 @@ bool MatrixBase<Derived>::isUpperTriangular(RealScalar prec) const
   * \sa isUpperTriangular()
   */
 template<typename Derived>
-bool MatrixBase<Derived>::isLowerTriangular(RealScalar prec) const
+bool MatrixBase<Derived>::isLowerTriangular(const RealScalar& prec) const
 {
+  using std::abs;
   RealScalar maxAbsOnLowerPart = static_cast<RealScalar>(-1);
   for(Index j = 0; j < cols(); ++j)
     for(Index i = j; i < rows(); ++i)
     {
-      RealScalar absValue = internal::abs(coeff(i,j));
+      RealScalar absValue = abs(coeff(i,j));
       if(absValue > maxAbsOnLowerPart) maxAbsOnLowerPart = absValue;
     }
   RealScalar threshold = maxAbsOnLowerPart * prec;
@@ -817,7 +829,7 @@ bool MatrixBase<Derived>::isLowerTriangular(RealScalar prec) const
   {
     Index maxi = (std::min)(j, rows()-1);
     for(Index i = 0; i < maxi; ++i)
-      if(internal::abs(coeff(i, j)) > threshold) return false;
+      if(abs(coeff(i, j)) > threshold) return false;
   }
   return true;
 }
