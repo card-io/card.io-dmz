@@ -124,11 +124,20 @@ DMZ_INTERNAL void prepare_image_for_cat(IplImage *image, IplImage *as_float, Cha
 //}
 
 DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage *as_float) {
-  std::vector<DigitProbabilities> probabilities;
+  // Constructing the `probabilities` vector with a dummy element, and then popping that element,
+  // works around an apparent Clang bug (for 32-bit builds with -O2 or -O3 optimization).
+  // If we instead simply create `probabilities` without an explicit constructor, it looks like
+  // the vector's internal `__begin_` and `__end_` pointers are sometimes set incorrectly, resulting in a
+  // crash when we subsequently try to push an element.
+  // [Feb 2015]
+  DigitProbabilities dummy = DigitProbabilities::Zero();
+  std::vector<DigitProbabilities> probabilities(1, dummy);
+  probabilities.pop_back();
+  
   assert(as_float->width * sizeof(float) == as_float->widthStep);
   Eigen::Map<DigitModelInput> conv_digit_model_input((float *)as_float->imageData);
 //  Eigen::Map<MLPModelInput> mlp_digit_model_input((float *)as_float->imageData);
-
+  
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
   suseconds_t interval[10];
 #endif
