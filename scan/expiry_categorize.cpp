@@ -329,7 +329,7 @@ DMZ_INTERNAL void expiry_aggregate_grouped_rects(GroupedRectsList &aggregated_gr
       group1.scores = ((group1.scores * groups_coalesced_so_far) + group2.scores) / (groups_coalesced_so_far + 1);
       groups_coalesced_so_far++;
       new_groups.erase(new_groups.begin() + new_index_2);
-      dmz_debug_print("** Yup, coalesced a new group with another! WTF? ***\n");
+      dmz_debug_print("*** Yup, coalesced a new group with another! WTF? ***\n");
     }
   }
   
