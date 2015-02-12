@@ -169,7 +169,17 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   return probabilities;
 }
 
+float nth_root(float value) {
+  return (float) pow(value, 1.0 / NUMBER_OF_MODELS);
+}
+
 DMZ_INTERNAL inline ExpiryGroupScores combine_model_results(ExpiryGroupScores probability_vector[NUMBER_OF_MODELS]) {
+#if NUMBER_OF_MODELS == 1
+  
+  return probability_vector[0];
+  
+#else
+  
 #if 0
   // Arithmetric mean:
   ExpiryGroupScores average_vector = ExpiryGroupScores::Zero();
@@ -184,21 +194,16 @@ DMZ_INTERNAL inline ExpiryGroupScores combine_model_results(ExpiryGroupScores pr
     average_vector = average_vector.array() * probability_vector[model_index].array();
   }
   
-  double root_power = 1.0 / NUMBER_OF_MODELS;
-  
-  for (int character_index = 0; character_index < kExpiryMaxValidLength; character_index++) {
-    float sum = 0.0f;
-    for (int digit = 0; digit < 10; digit++) {
-      float nth_root = (float) pow(average_vector(character_index, digit), root_power);
-      average_vector(character_index, digit) = nth_root;
-      sum += nth_root;
-    }
-    for (int digit = 0; digit < 10; digit++) {
-      average_vector(character_index, digit) /= sum;
-    }
-  }
+  //   The following line produces a compiler error
+  //   ("implicit instantiation of undefined template MatrixPowerReturnValue..."):
+  // average_vector = average_vector.pow(root_power);
+
+  // So instead use the generic coefficient-wise method:
+  average_vector = average_vector.unaryExpr(std::ptr_fun(nth_root));
   
   return average_vector;
+#endif
+
 #endif
 }
 
