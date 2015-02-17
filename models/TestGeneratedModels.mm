@@ -20,12 +20,10 @@
 // expiry models
 #include "modelm_730c4cbd.hpp"
 #include "modelc_bf4dd6c8.hpp"
-//#include "modelm_d38dff65.hpp"
-//#include "modelm_f6aa7969.hpp"
-//#include "modelm_cb758d40.hpp"
-//#include "modelm_9a27fb30.hpp"
-//#include "modelm_ad529645.hpp"
-//#include "modelm_db226864.hpp"
+#include "modelm_b8c71409.hpp"
+#include "modelm_15a2927a.hpp"
+#include "modelm_16d95fdf.hpp"
+#include "modelm_47b13bb4.hpp"
 #endif
 
 @implementation TestGeneratedModels
@@ -54,12 +52,10 @@ static BOOL failure = NO;
 #if SCAN_EXPIRY
   SELF_CHECK_MODEL(passm_730c4cbd);
   SELF_CHECK_MODEL(passc_bf4dd6c8);
-//  SELF_CHECK_MODEL(passm_d38dff65);
-//  SELF_CHECK_MODEL(passm_f6aa7969);
-//  SELF_CHECK_MODEL(passm_cb758d40);
-//  SELF_CHECK_MODEL(passm_9a27fb30);
-//  SELF_CHECK_MODEL(passm_ad529645);
-//  SELF_CHECK_MODEL(passm_db226864);
+  SELF_CHECK_MODEL(passm_b8c71409);
+  SELF_CHECK_MODEL(passm_15a2927a);
+  SELF_CHECK_MODEL(passm_16d95fdf);
+  SELF_CHECK_MODEL(passm_47b13bb4);
 #endif
 }
 

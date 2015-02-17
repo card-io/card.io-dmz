@@ -33,6 +33,10 @@
 #include "./scan/scan_analytics.cpp"
 
   #if SCAN_EXPIRY
+    #include "./models/expiry/bisectors/a/modelm_b8c71409.cpp"
+    #include "./models/expiry/bisectors/b/modelm_15a2927a.cpp"
+    #include "./models/expiry/bisectors/c/modelm_16d95fdf.cpp"
+    #include "./models/expiry/bisectors/d/modelm_47b13bb4.cpp"
     #include "./models/expiry/modelc_bf4dd6c8.cpp"
     #include "./models/expiry/modelm_730c4cbd.cpp"
     #include "./scan/expiry_categorize.cpp"
