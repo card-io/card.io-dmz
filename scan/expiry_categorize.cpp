@@ -18,12 +18,6 @@
 #endif
 
 // digit categorizers
-//#include "models/expiry/bisectors/a/modelm_d38dff65.hpp"
-//#include "models/expiry/bisectors/b/modelm_f6aa7969.hpp"
-//#include "models/expiry/bisectors/c/modelm_cb758d40.hpp"
-//#include "models/expiry/bisectors/d/modelm_9a27fb30.hpp"
-//#include "models/expiry/bisectors/5/modelm_ad529645.hpp"
-//#include "models/expiry/bisectors/8/modelm_db226864.hpp"
 #include "models/expiry/modelc_bf4dd6c8.hpp"
 
 #define GROUPED_RECTS_VERTICAL_ALLOWANCE (kTrimmedCharacterImageHeight / 2)
@@ -37,8 +31,6 @@
 typedef Eigen::Matrix<float, 1, 176, Eigen::RowMajor> MLPModelInput;
 typedef Eigen::Matrix<float, 16, 11, Eigen::RowMajor> DigitModelInput;
 typedef Eigen::Matrix<float, 1, 10, Eigen::RowMajor> DigitProbabilities;
-//typedef Eigen::Matrix<float, 176, 1, Eigen::ColMajor> BisectorInput;
-//typedef Eigen::Matrix<float, 2, 1, Eigen::ColMajor> BisectorProbabilities;
 
 #pragma mark - image preparation
 
@@ -82,47 +74,6 @@ DMZ_INTERNAL void prepare_image_for_cat(IplImage *image, IplImage *as_float, Cha
 
 #pragma mark - categorize expiry digits via machine learning
 
-//DMZ_INTERNAL inline DigitProbabilities apply_bisectors(BisectorInput input) {
-//#define NUMBER_OF_BISECTORS 6
-//  const int model_bisections[NUMBER_OF_BISECTORS][10] = {{1,0,0,1,0,0,1,0,1,1},  // {0,3,6,8,9} vs. {1,2,4,5,7} - big round digits
-//                                                         {0,0,1,1,0,1,0,1,0,1},  // {2,3,5,7,9} vs. {0,1,4,6,8} - digits with flat tops
-//                                                         {1,1,0,1,0,0,0,1,0,1},  // {0,1,3,7,9} vs. {2,4,5,6,8} - digits with strong verticals?
-//                                                         {1,0,0,1,0,1,1,1,0,0},  // {0,3,5,6,7} vs. {1,2,4,8,9} - chosen to break ties among a,b,c
-//                                                         {0,0,0,0,0,1,0,0,0,0},  // {5} vs. {0,1,2,3,4,6,7,8,9}
-//                                                         {0,0,0,0,0,0,0,0,1,0}};  // {8} vs. {0,1,2,3,4,5,6,7,9}
-// 
-//  BisectorProbabilities bisector_results[NUMBER_OF_BISECTORS];
-//  
-//  bisector_results[0] = applym_d38dff65(input);
-//  bisector_results[1] = applym_f6aa7969(input);
-//  bisector_results[2] = applym_cb758d40(input);
-//  bisector_results[3] = applym_9a27fb30(input);
-//  bisector_results[4] = applym_ad529645(input);
-//  bisector_results[5] = applym_db226864(input);
-//  
-//  DigitProbabilities probabilities = DigitProbabilities::Ones();
-//  
-//  // TODO: Eigen-ize these loops
-//  
-//  for (int model_index = 0; model_index < NUMBER_OF_BISECTORS; model_index++) {
-//    for (int digit = 0; digit < 10; digit++) {
-//      float model_digit_probability = bisector_results[model_index](model_bisections[model_index][digit]);
-//      probabilities(digit) *= model_digit_probability;
-//    }
-//  }
-//
-//  for (int digit = 0; digit < 10; digit++) {
-//    probabilities(digit) = powf(probabilities(digit), (1.0f / (float)NUMBER_OF_BISECTORS));
-//  }
-//  
-//  float sum = probabilities.sum();
-//  for (int digit = 0; digit < 10; digit++) {
-//    probabilities(digit) = probabilities(digit) / sum;
-//  }
-//  
-//  return probabilities;
-//}
-
 DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage *as_float) {
   // Constructing the `probabilities` vector with a dummy element, and then popping that element,
   // works around an apparent Clang bug (for 32-bit builds with -O2 or -O3 optimization).
@@ -147,11 +98,6 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   interval[0] = dmz_debug_timer_print("apply model 0", 2);
 #endif
   
-//  probabilities.push_back(apply_bisectors(mlp_digit_model_input));
-//#if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
-//  interval[1] = dmz_debug_timer_print("apply model 1", 2);
-//#endif
-
 #define NUMBER_OF_MODELS 1
 
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
