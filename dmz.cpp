@@ -61,30 +61,48 @@ void dmz_YCbCr_to_RGB(IplImage *y, IplImage *cb, IplImage *cr, IplImage **rgb) {
   llcv_YCbCr2RGB_u8(y, cb, cr, *rgb);
 }
 
-void dmz_deinterleave_RGBA_to_R(uint8_t *source, uint8_t *dest, int size) {
-#if DMZ_HAS_NEON_COMPILETIME
-  if (dmz_has_neon_runtime()) {
-    assert(size % 16 == 0);     // should be safe to assume that we're copying at least 4 RGBA pixels at a time
-    for (int offset = 0; offset < size; offset += 16) {
-      uint8x16x4_t r1 = vld4q_u8(&source[offset * 4]);
-      vst1q_u8(&dest[offset], r1.val[0]);
-    }
+inline void dmz_deinterleave_RGBA_to_R_bytes(uint8_t *source, uint8_t *dest, int size) {
+  for (int offset = 0; offset + 7 < size; offset += 8) {
+    int bufferOffset = offset * 4;
+    dest[offset] = source[bufferOffset];
+    dest[offset + 1] = source[bufferOffset + (1 * 4)];
+    dest[offset + 2] = source[bufferOffset + (2 * 4)];
+    dest[offset + 3] = source[bufferOffset + (3 * 4)];
+    dest[offset + 4] = source[bufferOffset + (4 * 4)];
+    dest[offset + 5] = source[bufferOffset + (5 * 4)];
+    dest[offset + 6] = source[bufferOffset + (6 * 4)];
+    dest[offset + 7] = source[bufferOffset + (7 * 4)];
   }
-  else
-#endif
-  {
-    assert(size % 8 == 0);     // should be safe to assume that we're copying at least 2 RGBA pixels at a time
-    for (int offset = 0; offset < size; offset += 8) {
+  
+  int leftover_bytes = size % 8; // each RGBA pixel is 4 bytes, so can assume size % 4 == 0
+  if (leftover_bytes > 0) {
+    for (int offset = size - leftover_bytes; offset < size; offset += 4) {
       int bufferOffset = offset * 4;
       dest[offset] = source[bufferOffset];
       dest[offset + 1] = source[bufferOffset + (1 * 4)];
       dest[offset + 2] = source[bufferOffset + (2 * 4)];
       dest[offset + 3] = source[bufferOffset + (3 * 4)];
-      dest[offset + 4] = source[bufferOffset + (4 * 4)];
-      dest[offset + 5] = source[bufferOffset + (5 * 4)];
-      dest[offset + 6] = source[bufferOffset + (6 * 4)];
-      dest[offset + 7] = source[bufferOffset + (7 * 4)];
     }
+  }
+}
+
+void dmz_deinterleave_RGBA_to_R(uint8_t *source, uint8_t *dest, int size) {
+#if DMZ_HAS_NEON_COMPILETIME
+  if (dmz_has_neon_runtime()) {
+    for (int offset = 0; offset + 15 < size; offset += 16) {
+      uint8x16x4_t r1 = vld4q_u8(&source[offset * 4]);
+      vst1q_u8(&dest[offset], r1.val[0]);
+    }
+    
+    int leftover_bytes = size % 16;
+    if (leftover_bytes > 0) {
+      dmz_deinterleave_RGBA_to_R_bytes(source + (size - leftover_bytes) * 4, dest + (size - leftover_bytes), leftover_bytes);
+    }
+  }
+  else
+#endif
+  {
+    dmz_deinterleave_RGBA_to_R_bytes(source, dest, size);
   }
 }
 
@@ -330,7 +348,6 @@ void find_line_in_detection_rects(IplImage **samples, float *rho_multiplier, CvR
   for(int i = 0; i < kNumColorPlanes && !found_edge->found; i++) {
     IplImage *image = samples[i];
     assert(image != NULL);
-    assert(detection_rects[i] != NULL);
     #if DMZ_TRACE
     CvSize imageSize = cvGetSize(image);
     dmz_trace_log("sample %i has size %ix%i", i, imageSize.width, imageSize.height);
