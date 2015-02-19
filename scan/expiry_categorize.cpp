@@ -74,16 +74,9 @@ DMZ_INTERNAL void prepare_image_for_cat(IplImage *image, IplImage *as_float, Cha
 
 #pragma mark - categorize expiry digits via machine learning
 
-DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage *as_float) {
-  // Constructing the `probabilities` vector with a dummy element, and then popping that element,
-  // works around an apparent Clang bug (for 32-bit builds with -O2 or -O3 optimization).
-  // If we instead simply create `probabilities` without an explicit constructor, it looks like
-  // the vector's internal `__begin_` and `__end_` pointers are sometimes set incorrectly, resulting in a
-  // crash when we subsequently try to push an element.
-  // [Feb 2015]
-  DigitProbabilities dummy = DigitProbabilities::Zero();
-  std::vector<DigitProbabilities> probabilities(1, dummy);
-  probabilities.pop_back();
+DMZ_INTERNAL inline DigitProbabilities *digit_probabilities(IplImage *as_float) {
+#define MAX_NUMBER_OF_MODELS 10
+  static DigitProbabilities probabilities[MAX_NUMBER_OF_MODELS];
   
   assert(as_float->width * sizeof(float) == as_float->widthStep);
   Eigen::Map<DigitModelInput> conv_digit_model_input((float *)as_float->imageData);
@@ -93,7 +86,7 @@ DMZ_INTERNAL inline std::vector<DigitProbabilities> digit_probabilities(IplImage
   suseconds_t interval[10];
 #endif
   
-  probabilities.push_back(applyc_bf4dd6c8(conv_digit_model_input));
+  probabilities[0] = applyc_bf4dd6c8(conv_digit_model_input);
 #if DEBUG_EXPIRY_CATEGORIZATION_PERFORMANCE
   interval[0] = dmz_debug_timer_print("apply model 0", 2);
 #endif
@@ -164,7 +157,7 @@ DMZ_INTERNAL inline ExpiryGroupScores categorize_expiry_digits(IplImage *card_y,
     CharacterRectListIterator rect = group.character_rects.begin() + character_index;
     
     prepare_image_for_cat(card_y, as_float, rect);
-    std::vector<DigitProbabilities> probabilities = digit_probabilities(as_float);
+    DigitProbabilities *probabilities = digit_probabilities(as_float);
     
     for (int model_index = 0; model_index < NUMBER_OF_MODELS; model_index++) {
       for (int digit_index = 0; digit_index < 10; digit_index++) {
