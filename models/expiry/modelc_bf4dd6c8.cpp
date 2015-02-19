@@ -9,7 +9,6 @@
 #include "compile.h"
 #if COMPILE_DMZ
 
-#define EIGEN_NO_DEBUG 1 // turn off range checking and anything else that could slow us down!
 #define USE_OPTIMIZED_3x3_CONVOLUTION_bf4dd6c8 0
 
 #include "modelc_bf4dd6c8.hpp"
@@ -12509,14 +12508,12 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
   uint16_t limited_input_col;
   uint16_t limited_kernel_cols;
   uint16_t first_kernel_col;
-  Eigen::Matrix<float, 5, 5> input_submatrix_5_5;
-  Eigen::Matrix<float, 5, Eigen::Dynamic> input_submatrix_5_D;
-  Eigen::Matrix<float, Eigen::Dynamic, 5> input_submatrix_D_5;
-  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> input_submatrix_D_D;
+  Eigen::Matrix<float, 5, 5, Eigen::RowMajor> input_submatrix_5_5;
+  Eigen::Matrix<float, 5, Eigen::Dynamic, Eigen::RowMajor, 5, 5> input_submatrix_5_D;
+  Eigen::Matrix<float, Eigen::Dynamic, 5, Eigen::RowMajor, 5, 5> input_submatrix_D_5;
+  Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor, 5, 5> input_submatrix_D_D;
   ModelCSingleKernel_bf4dd6c8_1 zero_kernel = ModelCSingleKernel_bf4dd6c8_1::Zero();
   ModelCSingleKernel_bf4dd6c8_1 padded_submatrix;
-  ModelCSingleKernel_bf4dd6c8_1 elemwise_mult;
-  float sum;
 
   for(output_row = 0; output_row < 5 - 1; output_row++) {
     limited_input_row = 0;
@@ -12531,9 +12528,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, first_kernel_col, limited_kernel_rows, limited_kernel_cols) = input_submatrix_D_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
     
@@ -12545,9 +12540,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, 0, limited_kernel_rows, limited_kernel_cols) = input_submatrix_D_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
     
@@ -12558,9 +12551,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, 0, limited_kernel_rows, 5) = input_submatrix_D_5;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
    }
@@ -12578,9 +12569,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, first_kernel_col, limited_kernel_rows, limited_kernel_cols) = input_submatrix_D_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
     
@@ -12592,9 +12581,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, 0, limited_kernel_rows, limited_kernel_cols) = input_submatrix_D_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
     
@@ -12605,9 +12592,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(first_kernel_row, 0, limited_kernel_rows, 5) = input_submatrix_D_5;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
    }
@@ -12623,12 +12608,10 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(0, first_kernel_col, 5, limited_kernel_cols) = input_submatrix_5_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
-    for(output_col = 14 - 5; output_col < 14; output_col++) {
+    for(output_col = (11 + 5 - 1) - (5 - 1); output_col < 14; output_col++) {
       limited_input_col = output_col - 5 + 1;
       limited_kernel_cols = 11 - limited_input_col;
       
@@ -12636,18 +12619,15 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_1 convc_bf4dd6c8_1(const ModelCConvI
       padded_submatrix = zero_kernel;
       padded_submatrix.block(0, 0, 5, limited_kernel_cols) = input_submatrix_5_D;
       
-      elemwise_mult = kernel.cwiseProduct(padded_submatrix);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(padded_submatrix).sum();
     }
 
-    for(output_col = 5 - 1; output_col < 14 - 5; output_col++) {
+    for(output_col = 5 - 1; output_col < (11 + 5 - 1) - (5 - 1); output_col++) {
       limited_input_col = output_col - 5 + 1;
       
       input_submatrix_5_5 = input.block(limited_input_row, limited_input_col, 5, 5);
-      elemwise_mult = kernel.cwiseProduct(input_submatrix_5_5);
-      sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+
+      output(output_row, output_col) = kernel.cwiseProduct(input_submatrix_5_5).sum();
     }
   }
 
@@ -12667,27 +12647,6 @@ DMZ_INTERNAL ModelCSingleDownsampled_bf4dd6c8_1 downc_bf4dd6c8_1(const ModelCSin
 DMZ_INTERNAL ModelCConvResult_bf4dd6c8_1 convolve_bf4dd6c8_1(const ModelCConvInput_bf4dd6c8_1& input) {
   ModelCConvResult_bf4dd6c8_1 accumulated_results;
 
-#ifndef __LP64__
-  // There is a mysterious bug which causes this method to sometimes
-  // produce bad results when running on a 32-bit processor.
-  // I have not been able to pin it down, but I strongly suspect some
-  // bug in either Eigen or Clang.
-  // That suspicion is founded in part on the fact that the following
-  // workaround actually works!
-  
-  if (!input.any() && input.sum() != 0) {
-    // any() is true if any coefficient is non-zero.
-    // So !any() is true only if all coefficients are zero.
-    // sum() != 0 is true only if !(all coefficients are zero).
-    // So the overall expression will NEVER be true.
-    // But the compiler is not sufficiently brilliant to know that,
-    // and therefore this never-executed code will be generated.
-    // Generating this code, even without executing it, is apparently
-    // sufficient to work around the mysterious 32-bit bug.
-    std::cerr << "card.io dmz: This is a bug workaround; ignore the following:\n" << input << "\n";
-  }
-#endif
-  
   Eigen::Map<ModelCAllKernels_bf4dd6c8_1, Eigen::Aligned> all_kernels((float *)data_359cb697);
   Eigen::Map<ModelCConvB_bf4dd6c8_1, Eigen::Aligned> conv_b((float *)data_f0fed3cf);
 
@@ -12758,9 +12717,7 @@ DMZ_INTERNAL ModelCSingleConvolved_bf4dd6c8_2 convc_bf4dd6c8_2(const ModelCConvI
     // Scalar handling of non-vectorized leftovers
     for(uint16_t output_col = vector_processed_cols; output_col < 3; output_col++) {
       ModelCSingleKernel_bf4dd6c8_2 input_submatrix = input.block<5, 5>(output_row, output_col);
-      ModelCSingleKernel_bf4dd6c8_2 elemwise_mult = kernel.cwiseProduct(input_submatrix);
-      float sum = elemwise_mult.sum();
-      output(output_row, output_col) = sum;
+      output(output_row, output_col) = kernel.cwiseProduct(input_submatrix).sum();
     }
   }
   return output;
