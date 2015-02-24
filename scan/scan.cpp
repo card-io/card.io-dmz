@@ -179,6 +179,8 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
       }
     }
     else {
+      result->expiry_month = 0;
+      result->expiry_year = 0;
       result->complete = true;
     }
   }
