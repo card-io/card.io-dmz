@@ -11,6 +11,13 @@ Note that this is actual production code, which has been iterated upon by multip
 Brought to you by  
 [![PayPal logo](Resources/pp_h_rgb.png)](https://paypal.com/ "PayPal")
 
+ 
+Why "dmz?"
+---------
+`dmz` stands for "demilitarized zone" -- code that is not platform-specific to iOS, Android, nor any other OS.
+
+Some platform specific code did sneak in, but you'll note that it is in files called `mz`. :smile_cat: A `dmz_context` structure allows each platform to associate its specific data as needed.
+
 
 Some notes on writing dmz code
 ------------------------------
