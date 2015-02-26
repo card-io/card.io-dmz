@@ -8,6 +8,7 @@
 
 #include "expiry_seg.h"
 #include "dmz_debug.h"
+#include "stripes.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
 //#define DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE 1
@@ -56,19 +57,6 @@ DMZ_INTERNAL bool is_slash(IplImage *sobel_image, IplImage *as_float, CharacterR
 //                                   = (max character-rect sum) * (kCreditCardTargetWidth / kSmallCharacterWidth)
 //                                   = 26,193,600 = 0x18FAEC0, so group-rect sum will always fit in a long.
 // [Note: It's no coincidence that (Maximum grouped-rect sum possible) == (Maximum stripe-sum possible).]
-
-struct StripeSum
- {
-  int   base_row;
-  long  sum;
-};
-
-struct StripeSumCompareDescending
- : public std::binary_function<StripeSum, StripeSum, bool> {
-  inline bool operator()(StripeSum const &stripe_sum_1, StripeSum const &stripe_sum_2) const {
-    return (stripe_sum_1.sum > stripe_sum_2.sum);
-  }
-};
 
 struct CharacterRectCompareSumDescending
  : public std::binary_function<CharacterRect, CharacterRect, bool> {
