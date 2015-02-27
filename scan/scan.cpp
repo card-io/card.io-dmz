@@ -68,8 +68,9 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_e
   
   if (still_need_to_collect_card_number) {
     
-    state->mostRecentUsableCardNumberHSeg = result->hseg;
-
+    state->mostRecentUsableHSeg = result->hseg;
+    state->mostRecentUsableVSeg = result->vseg;
+    
     if(result->hseg.n_offsets == 15) {
       state->aggregated15 *= kDecayFactor;
       state->aggregated15 += result->scores * (1 - kDecayFactor);
@@ -108,6 +109,9 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
     if(min_count * 2 > max_count) {
       return;
     }
+    
+    result->hseg = state->mostRecentUsableHSeg;
+    result->vseg = state->mostRecentUsableVSeg;
 
     // TODO: Sanity check the scores distributions
     // TODO: Do something else sophisticated here -- look at confidences, distributions, stability, hysteresis, etc.
