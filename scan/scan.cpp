@@ -67,6 +67,9 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_e
 #endif
   
   if (still_need_to_collect_card_number) {
+    
+    state->mostRecentUsableCardNumberHSeg = result->hseg;
+
     if(result->hseg.n_offsets == 15) {
       state->aggregated15 *= kDecayFactor;
       state->aggregated15 += result->scores * (1 - kDecayFactor);

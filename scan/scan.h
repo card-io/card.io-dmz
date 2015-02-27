@@ -35,6 +35,7 @@ typedef struct {
   NumberScores aggregated16;
   ScanSessionAnalytics session_analytics;
   ScannerResult successfulCardNumberResult;
+  NHorizontalSegmentation mostRecentUsableCardNumberHSeg;
   unsigned long timeOfCardNumberCompletionInMilliseconds;
   bool scan_expiry;
   int expiry_month;
