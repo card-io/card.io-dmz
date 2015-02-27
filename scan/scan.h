@@ -19,6 +19,8 @@ typedef Eigen::Matrix<NumberScores::Index, 16, 1, Eigen::ColMajor> NumberPredict
 typedef struct {
   bool complete; // if complete is false, the rest of the stuff in this struct must be ignored
   NumberPredictions predictions;
+  NHorizontalSegmentation hseg;
+  NVerticalSegmentation vseg;
   uint8_t n_numbers;
   int expiry_month;
   int expiry_year;
@@ -35,7 +37,8 @@ typedef struct {
   NumberScores aggregated16;
   ScanSessionAnalytics session_analytics;
   ScannerResult successfulCardNumberResult;
-  NHorizontalSegmentation mostRecentUsableCardNumberHSeg;
+  NHorizontalSegmentation mostRecentUsableHSeg;
+  NVerticalSegmentation   mostRecentUsableVSeg;
   unsigned long timeOfCardNumberCompletionInMilliseconds;
   bool scan_expiry;
   int expiry_month;
