@@ -28,7 +28,11 @@ struct StripeSumCompareDescending
   }
 };
 
-std::vector<StripeSum> sorted_stripes(IplImage *sobel_image, uint16_t starting_y_offset, int minCharacterHeight, int maxCharacterHeight) {
+std::vector<StripeSum> sorted_stripes(IplImage *sobel_image,
+                                      uint16_t starting_y_offset,
+                                      int minCharacterHeight,
+                                      int maxCharacterHeight,
+                                      size_t numberOfStripesToTry) {
 #if DEBUG_STRIPES_PERFORMANCE
   dmz_debug_timer_start();
 #endif
@@ -77,7 +81,7 @@ std::vector<StripeSum> sorted_stripes(IplImage *sobel_image, uint16_t starting_y
     if (line_sum[base_row] + line_sum[base_row + 1] < threshold) {
       continue;
     }
-    if (line_sum[base_row + minCharacterHeight - 2] + line_sum[base_row + kSmallCharacterHeight - 1] < threshold) {
+    if (line_sum[base_row + minCharacterHeight - 2] + line_sum[base_row + minCharacterHeight - 1] < threshold) {
       continue;
     }
     
@@ -100,11 +104,15 @@ std::vector<StripeSum> sorted_stripes(IplImage *sobel_image, uint16_t starting_y
     stripe_sum.height = minCharacterHeight;
     stripe_sum.sum = sum;
 
-    // While successive scan line sums are also > threshold, append them to the stripe
+    // While successive scan line sums are also >= threshold, append them to the stripe
     for (row = base_row + minCharacterHeight; row < last_stripe_base_row && stripe_sum.height <= maxCharacterHeight; row++) {
       if (line_sum[row] >= threshold) {
+        dmz_debug_print(" -> adding\n");
         stripe_sum.height++;
         stripe_sum.sum += line_sum[row];
+      }
+      else {
+        dmz_debug_print(" -> NOT adding\n");
       }
     }
 
@@ -121,8 +129,31 @@ std::vector<StripeSum> sorted_stripes(IplImage *sobel_image, uint16_t starting_y
 #if DEBUG_STRIPES_PERFORMANCE
   dmz_debug_timer_print("sort stripe sums");
 #endif
+  
+  std::vector<StripeSum> probable_stripes;
+  
+  for (std::vector<StripeSum>::iterator stripe_sum = stripe_sums.begin(); stripe_sum != stripe_sums.end(); ++stripe_sum) {
+    bool overlap = false;
+    for (std::vector<StripeSum>::iterator probable_stripe = probable_stripes.begin(); probable_stripe != probable_stripes.end(); ++probable_stripe) {
+      if (probable_stripe->base_row < stripe_sum->base_row + stripe_sum->height &&
+          stripe_sum->base_row < probable_stripe->base_row + probable_stripe->height) {
+        overlap = true;
+        break;
+      }
+    }
+    if (!overlap) {
+      probable_stripes.push_back(*stripe_sum);
+      if (probable_stripes.size() >= numberOfStripesToTry) {
+        break;
+      }
+    }
+  }
+  
+#if DEBUG_STRIPES_PERFORMANCE
+  dmz_debug_timer_print("eliminate overlapping stripes");
+#endif
 
-  return stripe_sums;
+  return probable_stripes;
 }
 
 #endif // COMPILE_DMZ

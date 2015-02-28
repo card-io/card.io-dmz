@@ -609,48 +609,29 @@ DMZ_INTERNAL void best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, 
   cvSetImageROI(card_y, relevant_rect);
   cvSetImageROI(sobel_image, relevant_rect);
   
-#if DEBUG_STRIPES_PERFORMANCE
+#if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
   dmz_debug_timer_print("set up for Sobel");
 #endif
   
   llcv_scharr3_dx_abs(card_y, sobel_image);
   
-#if DEBUG_STRIPES_PERFORMANCE
+#if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
   dmz_debug_timer_print("do Sobel [Scharr]");
 #endif
   
   cvResetImageROI(card_y);
   cvResetImageROI(sobel_image);
   
-  std::vector<StripeSum> stripe_sums = sorted_stripes(sobel_image, starting_y_offset + kNumberHeight, kSmallCharacterHeight, kSmallCharacterHeight);
-
   // Determine the 3 most probable, non-overlapping stripes. (Where "stripe" == kSmallCharacterHeight contiguous scan lines.)
   // (Two will usually get us expiry and name, but some cards have additional distractions.)
   
 #define kNumberOfStripesToTry 3
   
-  std::vector<StripeSum> probable_stripes;
-
-  for (std::vector<StripeSum>::iterator stripe_sum = stripe_sums.begin(); stripe_sum != stripe_sums.end(); ++stripe_sum) {
-    bool overlap = false;
-    for (std::vector<StripeSum>::iterator probable_stripe = probable_stripes.begin(); probable_stripe != probable_stripes.end(); ++probable_stripe) {
-      if (probable_stripe->base_row - kSmallCharacterHeight < stripe_sum->base_row &&
-          stripe_sum->base_row < probable_stripe->base_row + kSmallCharacterHeight) {
-        overlap = true;
-        break;
-      }
-    }
-    if (!overlap) {
-      probable_stripes.push_back(*stripe_sum);
-      if (probable_stripes.size() >= kNumberOfStripesToTry) {
-        break;
-      }
-    }
-  }
-  
-#if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
-  dmz_debug_timer_print("pick probable stripes");
-#endif
+  std::vector<StripeSum> probable_stripes = sorted_stripes(sobel_image,
+                                                      starting_y_offset + kNumberHeight,
+                                                      kSmallCharacterHeight,
+                                                      kSmallCharacterHeight,
+                                                      kNumberOfStripesToTry);
   
   // For each stripe, find the potential expiry groups and name groups:
   

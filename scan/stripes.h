@@ -13,6 +13,10 @@ struct StripeSum
   long  sum;
 };
 
-std::vector<StripeSum> sorted_stripes(IplImage *sobel_image, uint16_t starting_y_offset, int minCharacterHeight, int maxCharacterHeight);
+std::vector<StripeSum> sorted_stripes(IplImage *sobel_image,
+                                      uint16_t starting_y_offset,
+                                      int minCharacterHeight,
+                                      int maxCharacterHeight,
+                                      size_t numberOfStripesToTry);
 
 #endif
