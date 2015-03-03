@@ -90,7 +90,7 @@ std::vector<StripeSum> sorted_stripes(IplImage *sobel_image,
     // of some card feature and the top of a different card feature.
     bool isGoodStripe = true;
     for (row = base_row; row < base_row + minCharacterHeight - 3; row++) {
-      if (line_sum[row + 1] < threshold && line_sum[row + 2] < threshold) {
+      if (line_sum[row + 1] + line_sum[row + 2] < threshold) {
         isGoodStripe = false;
         break;
       }
@@ -106,13 +106,9 @@ std::vector<StripeSum> sorted_stripes(IplImage *sobel_image,
 
     // While successive scan line sums are also >= threshold, append them to the stripe
     for (row = base_row + minCharacterHeight; row < last_stripe_base_row && stripe_sum.height <= maxCharacterHeight; row++) {
-      if (line_sum[row] >= threshold) {
-        dmz_debug_print(" -> adding\n");
+      if (line_sum[row - 1] + line_sum[row] >= threshold) {
         stripe_sum.height++;
         stripe_sum.sum += line_sum[row];
-      }
-      else {
-        dmz_debug_print(" -> NOT adding\n");
       }
     }
 
