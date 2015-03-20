@@ -2,7 +2,7 @@ This `opencv2` directory contains a copy of the OpenCV header files.
 
 When building the iOS or Android versions of card.io, this directory is not actually needed. Each of those projects contains its own `opencv_device` directory, which includes these header files as well as the relevant OpenCV static libraries built for that platform.
 
-But if you are trying to use card.io's `dmz` project in a different context, such as building card.io for a platform other that iOS or Android, these header files might come in handy.
+But if you are trying to use card.io's `dmz` project in a different context, such as building card.io for a platform other than iOS or Android, these header files might come in handy.
 
 In that case, however, you will still need to build your own platform-specific OpenCV static libraries. Specifically these two: `libopencv_core.a` and `libopencv_imgproc.a`.
 
