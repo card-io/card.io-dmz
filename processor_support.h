@@ -24,6 +24,13 @@
 
 // Enable simple compiletime checks for NEON support
 #if IOS_DMZ
+// ********************************* arm64 NOTE *********************************
+// Currently DMZ_HAS_NEON_COMPILETIME is disabled for the arm64 architecture.
+// To avoid compiler warnings, the `-mfloat-abi=softfp -mfpu=neon` compiler flags
+// have been removed from our arm64 builds for libCardIO (in Build Settings).
+// So if you enable DMZ_HAS_NEON_COMPILETIME for arm64 builds, then you will
+// also need to restore those compiler flags for arm64.
+// ********************************* arm64 NOTE *********************************
     #ifdef _ARM_ARCH_7
         #define DMZ_HAS_NEON_COMPILETIME 1
     #else
