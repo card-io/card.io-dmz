@@ -95,7 +95,7 @@ def make_ext(module_name, pyx_filename):
                      sources=[pyx_filename] + c_files,
                      language="c++",
                      depends=h_files + c_files + [pyx_filename],
-                     define_macros=[('CYTHON_DMZ', '1'), ],
+                     define_macros=[('CYTHON_DMZ', '1'), ('SCAN_EXPIRY', '1')],
                      pyrex_c_in_temp=True,
                      pyrex_cplus=True,
                      extra_objects=opencv_lib_files + cuda_lib_files,
