@@ -481,6 +481,12 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   dmz_debug_timer_print(msg4, 1);
 #endif
   
+  // Note: The two loops below use `kMinimumExpiryStripCharacters - 1` rather than `kMinimumExpiryStripCharacters`,
+  //       as you might have expected.
+  //       Sometimes the steps up to this point have gotten slightly confused by a card image, and have misidentified,
+  //       e.g., 5 actual characters as representing only 4 characters. We'll let such misidentifications through here,
+  //       and correct them in the next step when we call `regrid_group()`.
+  
   GroupedRectsList new_groups;
   for (GroupedRectsListIterator group = local_groups.begin(); group != local_groups.end(); ++group) {
     if (group->character_rects.size() >= kMinimumExpiryStripCharacters - 1) {
