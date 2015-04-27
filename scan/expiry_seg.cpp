@@ -12,10 +12,19 @@
 
 //#define DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE 1
 
+//#define DEBUG_EXPIRY_IMAGES 1
+#if DEBUG_EXPIRY_IMAGES
+static int image_session_count = 0;
+static int image_stripe_count = 0;
+static char image_filename_string[64];
+#endif
+
 // slash categorizer
 #include "models/expiry/modelm_730c4cbd.hpp"
 
 #pragma mark - image preparation
+
+
 
 DMZ_INTERNAL void prepare_image_for_seg(IplImage *image, IplImage *as_float, CharacterRect *rect) {
   // Input image: IPL_DEPTH_8U [0 - 255]
@@ -333,6 +342,47 @@ DMZ_INTERNAL void optimize_character_rects(IplImage *sobel_image, GroupedRects &
   cvResetImageROI(sobel_image);
 }
 
+#if DEBUG_EXPIRY_IMAGES
+DMZ_INTERNAL void add_rects_to_image(IplImage *image, CharacterRectList &rect_list, int character_width) {
+  for (CharacterRectListIterator rect = rect_list.begin(); rect != rect_list.end(); ++rect) {
+    cvRectangleR(image, cvRect(rect->left, rect->top, character_width, kSmallCharacterHeight), cvScalar(SHRT_MAX));
+  }
+}
+#endif
+
+#if DEBUG_EXPIRY_IMAGES
+DMZ_INTERNAL void save_image_groups(IplImage *image, GroupedRectsList &groups) {
+  if (!groups.size()) {
+    return;
+  }
+  
+  IplImage *rects_image = cvCreateImage(cvGetSize(image), image->depth, image->nChannels);
+  cvCopy(image, rects_image);
+  
+  int min_top = SHRT_MAX;
+  int max_top = 0;
+  for (GroupedRectsListIterator group = groups.begin(); group != groups.end(); ++group) {
+    add_rects_to_image(rects_image, group->character_rects, group->character_width);
+    
+    cvRectangleR(rects_image, cvRect(group->left - 1, group->top - 1, group->width + 2, group->height + 2), cvScalar(200.0f));
+    
+    if (group->top < min_top) {
+      min_top = group->top;
+    }
+    if (group->top > max_top) {
+      max_top = group->top;
+    }
+  }
+  
+  cvSetImageROI(rects_image, cvRect(0,
+                                    min_top - kSmallCharacterHeight,
+                                    rects_image->width,
+                                    MIN(max_top + 2 * kSmallCharacterHeight, image->height) - (min_top - kSmallCharacterHeight)));
+  ios_save_file(image_filename_string, rects_image);
+  cvReleaseImage(&rects_image);
+}
+#endif
+
 DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *sobel_image, int stripe_base_row, long stripe_sum, GroupedRectsList &expiry_groups, GroupedRectsList &name_groups) {
 #if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
   dmz_debug_timer_start(1);
@@ -434,6 +484,7 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
       grouped_rect.character_width = kSmallCharacterWidth;
       non_overlapping_rect_list.push_back(grouped_rect);
       
+      assert(8 == kSmallCharacterWidth - 1);
       non_overlapping_rect_mask[rect->left + 0] = true;
       non_overlapping_rect_mask[rect->left + 1] = true;
       non_overlapping_rect_mask[rect->left + 2] = true;
@@ -443,7 +494,6 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
       non_overlapping_rect_mask[rect->left + 6] = true;
       non_overlapping_rect_mask[rect->left + 7] = true;
       non_overlapping_rect_mask[rect->left + 8] = true;
-      assert(8 == kSmallCharacterWidth - 1);
     }
   }
   
@@ -451,6 +501,28 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   char msg2[256];
   sprintf(msg2, "find %ld non-overlapping rects", non_overlapping_rect_list.size());
   dmz_debug_timer_print(msg2, 1);
+#endif
+  
+#if DEBUG_EXPIRY_IMAGES
+  IplImage *rects_image = cvCreateImage(cvGetSize(card_y), card_y->depth, card_y->nChannels);
+  cvCopy(card_y, rects_image);
+  
+  int min_top = SHRT_MAX;
+  CharacterRectList rects;
+  for (GroupedRectsListIterator group = non_overlapping_rect_list.begin(); group != non_overlapping_rect_list.end(); ++group) {
+    CharacterRect rect(group->top, group->left, group->sum);
+    rects.push_back(rect);
+    if (group->top < min_top) {
+      min_top = group->top;
+    }
+  }
+  
+  add_rects_to_image(rects_image, rects, kSmallCharacterWidth);
+  image_stripe_count++;
+  sprintf(image_filename_string, "%d-e-%d-char_rects.png", image_session_count, image_stripe_count);
+  cvSetImageROI(rects_image, cvRect(0, min_top - kSmallCharacterHeight, rects_image->width, kSmallCharacterHeight * 3));
+  ios_save_file(image_filename_string, rects_image);
+  cvReleaseImage(&rects_image);
 #endif
   
   // "local group" = a set of character rects with inter-rect horizontal gaps of less than kSmallCharacterWidth
@@ -481,6 +553,11 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   dmz_debug_timer_print(msg4, 1);
 #endif
   
+#if DEBUG_EXPIRY_IMAGES
+  sprintf(image_filename_string, "%d-f-%d-groups.png", image_session_count, image_stripe_count);
+  save_image_groups(card_y, local_groups);
+#endif
+
   // Note: The two loops below use `kMinimumExpiryStripCharacters - 1` rather than `kMinimumExpiryStripCharacters`,
   //       as you might have expected.
   //       Sometimes the steps up to this point have gotten slightly confused by a card image, and have misidentified,
@@ -521,6 +598,11 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   dmz_debug_timer_print("regrid the groups", 1);
 #endif
   
+#if DEBUG_EXPIRY_IMAGES
+  sprintf(image_filename_string, "%d-g-%d-regrid.png", image_session_count, image_stripe_count);
+  save_image_groups(card_y, local_groups);
+#endif
+  
   for (int index = (int)local_groups.size() - 1; index >= 0; index--) {
     optimize_character_rects(sobel_image, local_groups[index]);
     if (local_groups[index].character_rects.size() == 0) {
@@ -540,6 +622,11 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   dmz_debug_timer_print("shrink the character rects", 1);
 #endif
   
+#if DEBUG_EXPIRY_IMAGES
+  sprintf(image_filename_string, "%d-h-%d-optimize.png", image_session_count, image_stripe_count);
+  save_image_groups(card_y, local_groups);
+#endif
+ 
   new_groups.clear();
   for (GroupedRectsListIterator group = local_groups.begin(); group != local_groups.end(); ++group) {
     if (group->character_rects.size() >= kMinimumExpiryStripCharacters) {
@@ -603,6 +690,11 @@ DMZ_INTERNAL void find_character_groups_for_stripe(IplImage *card_y, IplImage *s
   dmz_debug_timer_print("insert local groups into expiry_groups param", 1);
 #endif
   
+#if DEBUG_EXPIRY_IMAGES
+  sprintf(image_filename_string, "%d-i-%d-slash.png", image_session_count, image_stripe_count);
+  save_image_groups(card_y, expiry_groups);
+#endif
+  
   // Add supergroups to the passed-in name_groups GroupedRectsList
   name_groups.insert(name_groups.end(), super_groups.begin(), super_groups.end());
 
@@ -637,6 +729,14 @@ DMZ_INTERNAL void best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, 
   dmz_debug_timer_print("do Sobel [Scharr]");
 #endif
   
+#if DEBUG_EXPIRY_IMAGES
+  image_session_count++;
+  sprintf(image_filename_string, "%d-a-original.png", image_session_count);
+  ios_save_file(image_filename_string, card_y);
+  sprintf(image_filename_string, "%d-b-sobel.png", image_session_count);
+  ios_save_file(image_filename_string, sobel_image);
+#endif
+  
   cvResetImageROI(card_y);
   cvResetImageROI(sobel_image);
   
@@ -655,6 +755,33 @@ DMZ_INTERNAL void best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, 
   }
   
   cvResetImageROI(sobel_image);
+
+#if DEBUG_EXPIRY_IMAGES
+  long max_line_sum = 0;
+  long min_line_sum = LONG_MAX;
+  for (int row = below_numbers_rect.y; row < sobel_image->height; row++) {
+    max_line_sum = MAX(line_sum[row], max_line_sum);
+    min_line_sum = MIN(line_sum[row], min_line_sum);
+  }
+  long range = (max_line_sum - min_line_sum);
+  float scale_factor = range / 255.0f;
+  int two_thirds_width = (card_image_size.width * 2) / 3;
+  int one_thirds_width = card_image_size.width - two_thirds_width;
+  
+  IplImage *rows_image = cvCreateImage(cvGetSize(sobel_image), sobel_image->depth, sobel_image->nChannels);
+  cvSetZero(rows_image);
+  cvSetImageROI(sobel_image, cvRect(0, 0, two_thirds_width, sobel_image->height));
+  cvSetImageROI(rows_image, cvRect(0, 0, two_thirds_width, sobel_image->height));
+  cvCopy(sobel_image, rows_image);
+  cvResetImageROI(sobel_image);
+  for (int row = below_numbers_rect.y; row < sobel_image->height; row++) {
+    cvSetImageROI(rows_image, cvRect(two_thirds_width, row, one_thirds_width, 1));
+    cvSet(rows_image, cvScalar((line_sum[row] - min_line_sum) / scale_factor));
+  }
+  cvSetImageROI(rows_image, below_numbers_rect);
+  sprintf(image_filename_string, "%d-c-rows.png", image_session_count);
+  ios_save_file(image_filename_string, rows_image);
+#endif
   
 #if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
   dmz_debug_timer_print("line sums");
@@ -739,6 +866,25 @@ DMZ_INTERNAL void best_expiry_seg(IplImage *card_y, uint16_t starting_y_offset, 
   
 #if DEBUG_EXPIRY_SEGMENTATION_PERFORMANCE
   dmz_debug_timer_print("pick probable stripes");
+#endif
+  
+#if DEBUG_EXPIRY_IMAGES
+  int indent = two_thirds_width;
+  for (std::vector<StripeSum>::iterator probable_stripe = probable_stripes.begin(); probable_stripe != probable_stripes.end(); ++probable_stripe) {
+    cvSetImageROI(rows_image, cvRect(0, probable_stripe->base_row, two_thirds_width, 1));
+    cvSet(rows_image, cvScalar(SHRT_MAX));
+    cvSetImageROI(rows_image, cvRect(0, probable_stripe->base_row + kSmallCharacterHeight - 1, two_thirds_width, 1));
+    cvSet(rows_image, cvScalar(SHRT_MAX));
+    cvSetImageROI(rows_image, cvRect(indent, probable_stripe->base_row, 20, kSmallCharacterHeight));
+    cvSet(rows_image, cvScalar(SHRT_MAX));
+    indent += 20;
+  }
+  cvSetImageROI(rows_image, below_numbers_rect);
+  sprintf(image_filename_string, "%d-d-stripes.png", image_session_count);
+  ios_save_file(image_filename_string, rows_image);
+  cvReleaseImage(&rows_image);
+  
+  image_stripe_count = 0;
 #endif
   
   // For each stripe, find the potential expiry groups and name groups:
