@@ -64,4 +64,20 @@ void ios_gpu_unwarp(dmz_context *dmz, IplImage *input, const dmz_point from_poin
   [filter processIplImage:input dstIplImg:output];
 }
 
+#if DMZ_DEBUG
+void ios_save_file(char *filename, IplImage *image) {
+  IplImage        *localImage = cvCreateImage(cvGetSize(image), image->depth, image->nChannels);
+  cvConvertScale(image, localImage);
+  
+  CardIOIplImage  *cardioImage = [CardIOIplImage imageWithIplImage:localImage];
+  UIImage         *uiImage = [cardioImage UIImage];
+  NSData          *imageData = UIImagePNGRepresentation(uiImage);
+  NSString        *filePath = [NSString stringWithCString:filename encoding:NSUTF8StringEncoding];
+  NSString        *applicationDocumentsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+  NSString        *storePath = [applicationDocumentsDir stringByAppendingPathComponent:filePath];
+  
+  [imageData writeToFile:storePath atomically:YES];
+}
+#endif
+
 #endif // USE_CAMERA
