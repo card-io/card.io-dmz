@@ -38,7 +38,7 @@ If unsuccessful, then proceed to next image from the video stream. Otherwise, co
 
 Code for the following steps starts with `best_expiry_seg()` in `expiry_seg.cpp`.
 
-#### 6. Submit the expiry candidates for categorization.
+#### 6. Submit the expiry candidates for [categorization](expiry_categorization.md).
 
 
 Look for expiry candidates
@@ -94,7 +94,7 @@ Usually the 2 highest-scoring stripes will represent the expiry and the customer
   
 #### E. Within each of these 3 stripes, look for candidate groups of characters as described next.
 
-All candidate groups will eventually be sent to the expiry categorization pipeline.
+All candidate groups will eventually be sent to the [expiry categorization](expiry_categorization.md) pipeline.
 
 
 Look for candidate groups
@@ -167,7 +167,7 @@ Given a choice among equal-scoring shifts, we will choose the position with the 
 
 #### c. Look for a slash character, in a reasonable position.
 
-Using a neural-net, deep-learning model, we evaluate each character-rect to see if it represents a slash character (`/`).
+Using a [neural-net, deep-learning model](expiry_categorization.md), we evaluate each character-rect to see if it represents a slash character (`/`).
 
 For the moment, the only expiration date pattern that we accept is `MM/YY`.
 
