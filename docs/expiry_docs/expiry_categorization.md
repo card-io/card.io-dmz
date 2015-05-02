@@ -9,7 +9,7 @@ As described in [Expiry Segmentation](expiry_segmentation.md), card.io's segment
 
 ### Deep Learning models
 
-Categorizing expiry digits is challenging! The characters are small, measuring only about 9x15 pixels at standard camera resolution. (See [Camera resolution](../camera-resolution.md).) Card backgrounds vary widely, as do the effects of various lighting conditions.
+Categorizing expiry digits is challenging! The characters are small, measuring only about 9x15 pixels at standard camera resolution. (See [Camera resolution](../camera_resolution.md).) Card backgrounds vary widely, as do the effects of various lighting conditions.
 
 We use deep-learning neural-net models to perform categorization. The input to a model is a likely character image. The output is a set of category probabilities which sum to 1. For the slash categorizer, there are two categories: slash or non-slash. For the digit categorizer there are 10 categories: one for each digit.
 
