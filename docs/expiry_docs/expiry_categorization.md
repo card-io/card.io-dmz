@@ -22,7 +22,7 @@ Categorizing expiry digits is challenging! The characters are small, measuring o
 
 We use deep-learning neural-net models to perform categorization. The input to a model is a likely character image. The output is a set of category probabilities which sum to 1. For the slash categorizer, there are two categories: slash or non-slash. For the digit categorizer there are 10 categories: one for each digit.
 
-We create our models using [Theano](http://www.deeplearning.net/software/theano/), combined with a library of Python utilities that we have created for our own use. For expiry categorization, we use [multilayer perceptron](http://www.deeplearning.net/tutorial/mlp.html#mlp) and [convolutional](http://www.deeplearning.net/tutorial/lenet.html#lenet) models. We began with the sample Theano code, but have since added a number of refinements.
+We create our models using [Theano](http://www.deeplearning.net/software/theano/), combined with a library of Python utilities that we have created for our own use. For expiry categorization, we use [multilayer perceptron](http://www.deeplearning.net/tutorial/mlp.html#mlp) ("MLP") and [convolutional](http://www.deeplearning.net/tutorial/lenet.html#lenet) models. We began with the sample Theano code, but have since added a number of refinements.
 
 We have built and trained *many* models with a great variety of characteristics (depth, breadth, etc.). The choices of which models to include in card.io are based on each model's accuracy, constrained by the speed and size of the models. Trying to maintain a reasonable total size for this mobile-device library significantly limits the complexity of models available to us.
 
@@ -69,7 +69,7 @@ Other approaches that failed to clearly perform better than this model included:
 
 * Rather than x-axis Sobel, do no image processing.
 * Rather than x-axis Sobel, process images with other filters.
-* Convolutional models rather than multilayer perceptron models.
+* Convolutional models rather than MLP models.
 * Different numbers of hidden units.
 
 
@@ -91,7 +91,7 @@ The model was trained on:
 
 Before input, the images are processed with a sequence of computer-vision filters (gradient, equalization, bilateralization). This produces somewhat better results, with a small performance penalty, compared to using the x-axis Sobel processed image we already have on hand.
 
-We experimented with hundreds of other parameter values, such as the number and size of convolutional and hidden layers, the types of image processing used, etc. We also experimented with combining the results from a few different convolutional and multilayer perceptron models, but in the end found that the present single model produced equally good results.
+We experimented with hundreds of other parameter values, such as the number and size of convolutional and hidden layers, the types of image processing used, etc. We also experimented with combining the results from a few different convolutional and MLP models, but in the end found that the present single model produced equally good results.
 
 ### Some ideas that we'd like to investigate further
 
@@ -110,7 +110,7 @@ Unfortunately, each additional model will significantly increase the total size 
 
 #### Bisector models
 
-We have observed that multilayer perceptron ("MLP") models run at least 30 times faster than convolutional models.
+We have observed that MLP models run at least 30 times faster than convolutional models.
 
 Therefore we could see a big performance gain if we could replace our current single convolutional model with a set of several MLP models. (Although this would increase our memory requirement.)
 
