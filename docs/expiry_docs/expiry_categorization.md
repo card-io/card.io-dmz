@@ -12,7 +12,7 @@ Each of the remaining characters is then passed through the main expiry categori
 Finally, a few tests are applied to the resulting candidate month and year:
 
 * Month must be in the range `01` through `12`.
-* Month/Year must be in the range `now` through `5 years from now`. (The choice of 5 years is somewhat arbitrary. The more constrainted it is, the fewer false positives. Though there are some cards with extraordinarily long expirations--most forms on the web appear to allow for 15 years!--the vast majority of cards expire within a few years, so we optimize for them.)
+* Month/Year must be in the range `now` through `5 years from now`. (The choice of 5 years is somewhat arbitrary. The more constrained it is, the fewer false positives. Though there are some cards with extraordinarily long expirations--most forms on the web appear to allow for 15 years!--the vast majority of cards expire within a few years, so we optimize for them.)
 * Ignore a date if it is no later than the best date we've already found. (Some cards include start dates and issued-at dates as well as expiration dates.)
 
 
