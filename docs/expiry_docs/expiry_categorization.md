@@ -9,11 +9,11 @@ As described in [Expiry Segmentation](expiry_segmentation.md), card.io's segment
 
 Each of the remaining characters is then passed through the main expiry categorization step (described next) to classify it as a particular digit.
 
-Finally, a few tests are applied to the resulting supposed month and year:
+Finally, a few tests are applied to the resulting candidate month and year:
 
 * Month must be in the range `01` through `12`.
-* Month/Year must be in the range `now` through `5 years from now`. (The choice of 5 years is somewhat arbitrary.)
-* Ignore a date if it is no later than the best date we've already found. (Some cards include start dates as well as expiration dates.)
+* Month/Year must be in the range `now` through `5 years from now`. (The choice of 5 years is somewhat arbitrary. The more constrainted it is, the fewer false positives. Though there are some cards with extraordinarily long expirations--most forms on the web appear to allow for 15 years!--the vast majority of cards expire within a few years, so we optimize for them.)
+* Ignore a date if it is no later than the best date we've already found. (Some cards include start dates and issued-at dates as well as expiration dates.)
 
 
 ### Deep Learning models
@@ -22,7 +22,7 @@ Categorizing expiry digits is challenging! The characters are small, measuring o
 
 We use deep-learning neural-net models to perform categorization. The input to a model is a likely character image. The output is a set of category probabilities which sum to 1. For the slash categorizer, there are two categories: slash or non-slash. For the digit categorizer there are 10 categories: one for each digit.
 
-We create our models using [Theano](http://www.deeplearning.net/software/theano/), combined with a library of Python utilities that we have created for our own use. For expiry categorization, we use [multilayer perceptron](http://www.deeplearning.net/tutorial/mlp.html#mlp) ("MLP") and [convolutional](http://www.deeplearning.net/tutorial/lenet.html#lenet) models. We began with the sample Theano code, but have since added a number of refinements.
+We create our models using [Theano](http://www.deeplearning.net/software/theano/), combined with a library of Python utilities that we have created for our own use. For expiry categorization, we use [multilayer perceptron](http://www.deeplearning.net/tutorial/mlp.html#mlp) ("MLP") and [convolutional](http://www.deeplearning.net/tutorial/lenet.html#lenet) models. We began with the sample Theano code, but have since added a number of refinements. We then use code generation to convert our models (data) into executable C/C++ and commit the generated code.
 
 We have built and trained *many* models with a great variety of characteristics (depth, breadth, etc.). The choices of which models to include in card.io are based on each model's accuracy, constrained by the speed and size of the models. Trying to maintain a reasonable total size for this mobile-device library significantly limits the complexity of models available to us.
 
@@ -112,7 +112,7 @@ Unfortunately, each additional model will significantly increase the total size 
 
 We have observed that MLP models run at least 30 times faster than convolutional models.
 
-Therefore we could see a big performance gain if we could replace our current single convolutional model with a set of several MLP models. (Although this would increase our memory requirement.)
+Therefore we could see a big performance gain if we could replace our current single convolutional model with a set of several MLP models. (Although this would increase our binary size footprint.)
 
 One specific idea is as follows:
 
