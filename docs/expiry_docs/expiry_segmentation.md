@@ -130,7 +130,7 @@ Each group includes as many character-rects as possible. E.g., if there are seve
 
 #### iv. For each group, tidy up the character-rects as described next.
 
-Ignore groups of less than 5 character-rects, since the shortest valid expiry is `MM/YY`.
+Ignore groups of fewer than 5 character-rects, since the shortest valid expiry is `MM/YY`.
 
 
 Tidy up each group
