@@ -570,7 +570,8 @@ DMZ_INTERNAL void llcv_sobel3_dx_dy_c_neon(IplImage *src, IplImage *dst) {
   
   for(uint16_t row_index = 0; row_index < src_size.height; row_index++) {
     uint16_t row1_index = row_index == 0 ? 0 : row_index - 1;
-    uint16_t row2_index = (row_index == (uint16_t)(src_size.height - 1)) ? src_size.height - 1 : row_index + 1;
+    uint16_t last_row = (uint16_t)(src_size.height - 1);
+    uint16_t row2_index = row_index == last_row ? last_row : row_index + 1;
 
     const uint8_t *src_row1_origin = src_data_origin + row1_index * src_width_step;
     const uint8_t *src_row2_origin = src_data_origin + row2_index * src_width_step;
