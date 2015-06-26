@@ -26,7 +26,7 @@ def concat():
 
             if "cython_dmz" in base_path:
                 continue
-                
+
             if base_path.startswith("./.git/"):
                 continue
 
@@ -36,7 +36,7 @@ def concat():
                     is_impl = True
             if not is_impl:
                 continue
-            
+
             path = os.path.join(base_path, filename)
 
             if "expiry" in path:
@@ -53,10 +53,10 @@ def concat():
     include_lines.extend(["#ifndef DMZ_ALL_H", "#define DMZ_ALL_H 1", ""])
 
     include_lines.extend(["", "#if COMPILE_DMZ", ""])
-                          
+
     for impl_file in impl_files:
         include_lines.append("#include \"{impl_file}\"".format(**locals()))
-    
+
     include_lines.extend(["", "  #if SCAN_EXPIRY"])
     for expiry_impl_file in expiry_impl_files:
         include_lines.append("    #include \"{expiry_impl_file}\"".format(**locals()))
@@ -68,4 +68,3 @@ def concat():
 
     with open("dmz_all.cpp", "w") as out:
         out.write("\n".join(include_lines))
-
