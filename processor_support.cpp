@@ -72,6 +72,11 @@ AndroidProcessorSupport get_android_processor_support(void) {
              */
               androidProcessor = AndroidProcessorHasVFP3_16;
           }
+
+      } else if(android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM64) {
+          // 64 bit is NEON by definition, but requires new asm to compile.
+          // See https://github.com/card-io/card.io-dmz/pull/20
+          androidProcessor = AndroidProcessorHasVFP3_16;
       }
       dmz_debug_log("androidProcessor: %i", androidProcessor);
     }
