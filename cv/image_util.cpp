@@ -8,16 +8,16 @@
 DMZ_INTERNAL uint8_t llcv_get_pixel_step(IplImage *image) {
   uint8_t pixel_step = 0;
   switch(image->depth) {
-    case IPL_DEPTH_8S:
+    case (int) IPL_DEPTH_8S:
     case IPL_DEPTH_8U:
       pixel_step = sizeof(uint8_t);
       break;
     case IPL_DEPTH_16U:
-    case IPL_DEPTH_16S:
+    case (int) IPL_DEPTH_16S:
       pixel_step = sizeof(uint16_t);
       break;
     case IPL_DEPTH_32F:
-    case IPL_DEPTH_32S:
+    case (int) IPL_DEPTH_32S:
       pixel_step = sizeof(uint32_t);
       break;
     case IPL_DEPTH_64F:

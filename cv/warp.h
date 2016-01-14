@@ -17,7 +17,7 @@ DMZ_INTERNAL bool llcv_warp_auto_upsamples();
 
 // unwarps input image, interpolating image such that src_points map to dst_rect coordinates.
 // Image is written to output IplImage.
-void llcv_unwarp(void *dmz, IplImage *input, const dmz_point src_points[4], const dmz_rect dst_rect, IplImage *output);
+void llcv_unwarp(dmz_context *dmz, IplImage *input, const dmz_point src_points[4], const dmz_rect dst_rect, IplImage *output);
 
 // Solves and writes perpsective matrix to the matrixData buffer. 
 // If matrixDataSize >= 16, uses a 4x4 matrix. Otherwise a 3x3. 

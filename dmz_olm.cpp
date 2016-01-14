@@ -5,6 +5,7 @@
 #include <iostream>
 #include "dmz_olm.h"
 #include "processor_support.h"
+#include "opencv2/core.hpp"
 #include "opencv2/core/types_c.h"
 
 

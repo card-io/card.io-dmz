@@ -3,6 +3,9 @@
 //  See the file "LICENSE.md" for the full license governing this code.
 //
 
+#include <stdint.h>
+#include <assert.h>
+
 #include "compile.h"
 #if COMPILE_DMZ
 

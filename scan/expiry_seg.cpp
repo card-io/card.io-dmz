@@ -6,6 +6,9 @@
 #include "compile.h"
 #if COMPILE_DMZ
 
+#include "dmz_constants.h"
+#include "cv/sobel.h"
+
 #include "expiry_seg.h"
 #include "dmz_debug.h"
 #include "opencv2/imgproc/imgproc_c.h"
