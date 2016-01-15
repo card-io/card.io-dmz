@@ -8,7 +8,7 @@
 #include "processor_support.h"
 
 #include "opencv2/core/core.hpp"
-#include "opencv2/core/internal.hpp"  // used in llcv_equalize_hist
+#include "opencv2/core/private.hpp" // used in llcv_equalize_hist
 
 #if DMZ_HAS_NEON_COMPILETIME
   #include <arm_neon.h>
@@ -145,6 +145,10 @@ DMZ_INTERNAL void llcv_equalize_hist(const IplImage *srcimg, IplImage *dstimg) {
   {
     sum += hist[i];
     int val = cvRound(sum*scale);
+
+#undef CV_CAST_8U
+#define  CV_CAST_8U(t)  (uchar)(!((t) & ~255) ? (t) : (t) > 0 ? 255 : 0)
+
     lut[i] = CV_CAST_8U(val);
   }
   
