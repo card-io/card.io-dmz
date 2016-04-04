@@ -66,7 +66,8 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_e
 
 // Ask the scanner for its number predictions.
 // If result.complete is false, the rest of the result must be ignored.
-void scanner_result(ScannerState *state, ScannerResult *result, FrameScanResult *frameResult);
+void scanner_result(ScannerState *state, ScannerResult *result);
+void scanner_frame_result(ScannerState *state, ScannerResult *result, FrameScanResult *frameResult);
 
 // Destroy a scanner and any associated resources.
 void scanner_destroy(ScannerState *state);
