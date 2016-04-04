@@ -11,6 +11,17 @@
 #include "opencv2/core/core_c.h" // needed for IplImage
 #include "dmz_macros.h"
 
+typedef int SCAN_PROGRESS;
+enum {
+  SCAN_PROGRESS_NONE = 0,
+  SCAN_PROGRESS_EDGE_DETECT,
+  SCAN_PROGRESS_VSEG,
+  SCAN_PROGRESS_NSEG,
+  SCAN_PROGRESS_SCORE,
+  SCAN_PROGRESS_STABILITY,
+  SCAN_PROGRESS_EXPIRY
+};
+
 typedef struct {
   float                   focus_score;
   NumberScores            scores;
@@ -25,6 +36,7 @@ typedef struct {
   uint16_t                iso_speed;
   float                   shutter_speed;
   bool                    torch_is_on;
+  int                     scan_progress;
 } FrameScanResult;
 
 
