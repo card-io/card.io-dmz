@@ -218,9 +218,9 @@ inline void* aligned_malloc(size_t size)
     result = std::malloc(size);
   #elif EIGEN_MALLOC_ALREADY_ALIGNED
     result = std::malloc(size);
-  #elif EIGEN_HAS_POSIX_MEMALIGN
+  #elif EIGEN_HAS_POSIX_MEMALIGN && (!defined(__ANDROID__)) // android issue #60
     if(posix_memalign(&result, 16, size)) result = 0;
-  #elif EIGEN_HAS_MM_MALLOC
+  #elif EIGEN_HAS_MM_MALLOC && (!defined(__ANDROID__)) // android issue #60
     result = _mm_malloc(size, 16);
   #elif defined(_MSC_VER) && (!defined(_WIN32_WCE))
     result = _aligned_malloc(size, 16);
@@ -528,6 +528,22 @@ template<typename T> struct smart_copy_helper<T,false> {
   #elif defined(_MSC_VER)
     #define EIGEN_ALLOCA _alloca
   #endif
+#endif
+
+// MSC: Fix Android-source issue #60
+// https://github.com/card-io/card.io-Android-source/issues/60
+//
+// Newer Android NDKs clang compiler (version 11+) forbids the usage of inlined
+// stackpointer manipulation on ARM. Unfortunately, the POSIX function alloca()
+// normally creates inline assembler code that fiddles the stackpointer.
+// Since I was not able to determine the NDK version during compile time,
+// we disable stack allocation on Android ARM architecture until this is
+// changed by the Eigen project or fixed by the Android NDK team.
+//
+// Otherwise you will get inline assembler error messages like this:
+//    Error: r13 not allowed here -- `sub.w sp,r2,#832'
+#if defined(EIGEN_ALLOCA) && defined(__ANDROID__) && defined(__arm__)
+  #undef EIGEN_ALLOCA
 #endif
 
 // This helper class construct the allocated memory, and takes care of destructing and freeing the handled data
