@@ -8,6 +8,7 @@
 //
 
 #include "dmz_olm.h"
+#include "scan/scan.h"
 
 #include "opencv2/core/core_c.h" // needed for IplImage
 
@@ -92,6 +93,9 @@ bool dmz_detect_edges(IplImage *y_sample, IplImage *cb_sample, IplImage *cr_samp
 // to free transformed.
 void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points corner_points, FrameOrientation orientation, bool upsample, IplImage **transformed);
 
+// Blurs card number digits on a result image
+// the 'unblur' argument defines how many digits not to blur to remain visible.
+void dmz_blur_card(IplImage* cardImageRGB, ScannerState* state, int unblur);
 
 // FOR CYTHON USE ONLY
 #if CYTHON_DMZ
