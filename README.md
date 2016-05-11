@@ -18,10 +18,18 @@ Why "dmz?"
 
 Some platform specific code did sneak in, but you'll note that it is in files called `mz`. :smile_cat: A `dmz_context` structure allows each platform to associate its specific data as needed.
 
+ 
+Documentation
+-------------
+The dmz code contains many helpful comments, and variable and function names are usually meaningful, but otherwise we have not prepared much in the way of documentation.
+
+A *very* informative resource is this [talk](https://www.youtube.com/watch?v=T9TkkZg1L7s) that Josh Bleecher Snyder gave in 2015. He provides a fairly detailed overview of the steps followed by the card.io pipeline, and the thinking behind them.
+ 
+There are also some useful documents in the [docs](docs) folder.
+
 
 Some notes on writing dmz code
 ------------------------------
-
 * All functions that do not *need* to be called from outside the dmz should be declared and implemented prefixed by DMZ_INTERNAL. (This should be as much of the dmz as possible.)
 * If you add a new implementation file to the dmz, run `fab concat` to regenerate `dmz_all.cpp`, which is the only file that actually gets compiled.
 
