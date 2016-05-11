@@ -15,6 +15,7 @@
 #include "cv/stats.h"
 #include "cv/warp.h"
 #include "opencv2/core/core_c.h" // needed for IplImage
+#include "opencv2/imgproc/imgproc.hpp"
 
 #pragma mark life cycle
 
@@ -492,6 +493,23 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
 	  *transformed = cvCreateImage(cvSize(kCreditCardTargetWidth, kCreditCardTargetHeight), sample->depth, nChannels);
   }
   llcv_unwarp(dmz, sample, src_points, dst_rect, *transformed);
+}
+
+void dmz_blur_card(IplImage* cardImageRGB, ScannerState* state, int unblur)
+{
+    int blurCount = state->mostRecentUsableHSeg.n_offsets - unblur;
+    for (int i = 0; i < state->mostRecentUsableHSeg.n_offsets && i < blurCount ; i++) {
+        int num_x = state->mostRecentUsableHSeg.offsets[i] - 1;
+        int num_y = state->mostRecentUsableVSeg.y_offset - 1;
+        int num_w = state->mostRecentUsableHSeg.number_width + 2;
+        int num_h = kNumberHeight + 2;
+        if (i < 4) num_h *= 2; // blur smaller four digits below first bucket
+        cvSetImageROI(cardImageRGB, cvRect(num_x, num_y, num_w, num_h));
+        cv::Mat blurMat = cv::Mat(cardImageRGB, false);
+        cv::medianBlur(blurMat, blurMat, 25);
+        blurMat.release();
+    }
+    cvResetImageROI(cardImageRGB);
 }
 
 // FOR CYTHON USE ONLY
