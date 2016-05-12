@@ -31,8 +31,6 @@ typedef struct {
 } ScannerResult;
 
 typedef struct {
-  uint16_t count15;
-  uint16_t count16;
   NumberScores aggregated15;
   NumberScores aggregated16;
   ScanSessionAnalytics session_analytics;

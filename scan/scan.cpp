@@ -21,8 +21,6 @@ void scanner_initialize(ScannerState *state) {
 }
 
 void scanner_reset(ScannerState *state) {
-  state->count15 = 0;
-  state->count16 = 0;
   state->aggregated15 = NumberScores::Zero();
   state->aggregated16 = NumberScores::Zero();
   scan_analytics_init(&state->session_analytics);
@@ -71,14 +69,13 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_e
     state->mostRecentUsableHSeg = result->hseg;
     state->mostRecentUsableVSeg = result->vseg;
     
+    // decay all scores and increase just the matching one
+    state->aggregated15 *= kDecayFactor;
+    state->aggregated16 *= kDecayFactor;
     if(result->hseg.n_offsets == 15) {
-      state->aggregated15 *= kDecayFactor;
       state->aggregated15 += result->scores * (1 - kDecayFactor);
-      state->count15++;
     } else if(result->hseg.n_offsets == 16) {
-      state->aggregated16 *= kDecayFactor;
       state->aggregated16 += result->scores * (1 - kDecayFactor);
-      state->count16++;
     } else {
       assert(false);
     }
@@ -94,29 +91,16 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
 
   if (state->timeOfCardNumberCompletionInMilliseconds > 0) {
     *result = state->successfulCardNumberResult;
-  }
-  else {
-    uint16_t max_count = MAX(state->count15, state->count16);
-    uint16_t min_count = MIN(state->count15, state->count16);
 
-    // We want a three frame lead at a bare minimum.
-    // Also guarantees we have at least three frames, period. :)
-    if(max_count - min_count < 3) {
-      return;
-    }
-
-    // Want a significant opinion about whether visa or amex
-    if(min_count * 2 > max_count) {
-      return;
-    }
-    
+  } else {
     result->hseg = state->mostRecentUsableHSeg;
     result->vseg = state->mostRecentUsableVSeg;
 
     // TODO: Sanity check the scores distributions
     // TODO: Do something else sophisticated here -- look at confidences, distributions, stability, hysteresis, etc.
+    // pick best NumberScores aggregates: Visa vs Amex
     NumberScores aggregated;
-    if(state->count15 > state->count16) {
+    if (state->aggregated15.sum() > state->aggregated16.sum()) {
       result->n_numbers = 15;
       aggregated = state->aggregated15;
     } else {
