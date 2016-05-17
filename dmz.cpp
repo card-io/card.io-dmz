@@ -495,9 +495,10 @@ void dmz_transform_card(dmz_context *dmz, IplImage *sample, dmz_corner_points co
   llcv_unwarp(dmz, sample, src_points, dst_rect, *transformed);
 }
 
-void dmz_blur_card(IplImage* cardImageRGB, ScannerState* state, int unblur)
+void dmz_blur_card(IplImage* cardImageRGB, ScannerState* state, int unblurDigits)
 {
-    int blurCount = state->mostRecentUsableHSeg.n_offsets - unblur;
+    if (unblurDigits < 0) return;
+    int blurCount = state->mostRecentUsableHSeg.n_offsets - unblurDigits;
     for (int i = 0; i < state->mostRecentUsableHSeg.n_offsets && i < blurCount ; i++) {
         int num_x = state->mostRecentUsableHSeg.offsets[i] - 1;
         int num_y = state->mostRecentUsableVSeg.y_offset - 1;
