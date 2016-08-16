@@ -58,6 +58,7 @@ dmz_card_info dmz_card_info_for_prefix_and_length(uint8_t *number_array, uint8_t
   
   dmz_card_info card_types[] =
   {
+    {CardTypeMastercard,  16, 4, 2221, 2720},      // MasterCard 2-Series
     {CardTypeDiscover,    14, 3, 300, 305},        // Diners Club (Discover)
     {CardTypeDiscover,    14, 3, 309, 309},        // Diners Club (Discover)
     {CardTypeAmex,        15, 2, 34, 34},          // AmEx
