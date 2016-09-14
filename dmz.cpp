@@ -16,6 +16,7 @@
 #include "cv/warp.h"
 #include "opencv2/core/core_c.h" // needed for IplImage
 #include "opencv2/imgproc/imgproc.hpp"
+#include "scan/scan.h"
 
 #pragma mark life cycle
 
