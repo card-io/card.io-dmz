@@ -12,6 +12,7 @@
 #include "expiry_seg.h"
 #include <sys/time.h>
 
+
 // TODO: Somewhere expose some data+analytics to send to a server for future model training...
 
 typedef Eigen::Matrix<NumberScores::Index, 16, 1, Eigen::ColMajor> NumberPredictions; // one prediction per number (up to 16 of them)
@@ -63,6 +64,12 @@ void scanner_reset(ScannerState *state);
 //   will be set to true (and result->usable to false)
 void scanner_add_frame(ScannerState *state, IplImage *y, FrameScanResult *result); // pre-expiry backward-compatible version
 void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_expiry, FrameScanResult *result);
+void ocre_scanner_init();
+void ocre_scanner_scan(IplImage *y);
+bool ocre_scanner_complete();
+char* ocre_scanner_result();
+void ocre_scanner_reset();
+void ocre_scanner_destroy();
 
 // Ask the scanner for its number predictions.
 // If result.complete is false, the rest of the result must be ignored.
