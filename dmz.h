@@ -8,7 +8,6 @@
 //
 
 #include "dmz_olm.h"
-#include "scan/scan.h"
 
 #include "opencv2/core/core_c.h" // needed for IplImage
 
@@ -36,6 +35,9 @@ typedef struct {
   dmz_found_edge bottom;
   dmz_found_edge right;
 } dmz_edges;
+
+typedef struct ScannerState ScannerState;
+
 
 /******* Functions *******/
 

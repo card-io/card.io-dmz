@@ -30,7 +30,7 @@ typedef struct {
 #endif
 } ScannerResult;
 
-typedef struct {
+typedef struct ScannerState {
   uint16_t count15;
   uint16_t count16;
   NumberScores aggregated15;
