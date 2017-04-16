@@ -69,6 +69,7 @@ dmz_card_info dmz_card_info_for_prefix_and_length(uint8_t *number_array, uint8_t
     {CardTypeVisa,        16, 1, 4, 4},            // VISA
     {CardTypeMaestro,     16, 2, 50, 50},          // Maestro
     {CardTypeMastercard,  16, 2, 51, 55},          // MasterCard
+    {CardTypeMastercard,  16, 4, 2221, 2720},      // MasterCard for Bin
     {CardTypeMaestro,     16, 2, 56, 59},          // Maestro
     {CardTypeDiscover,    16, 4, 6011, 6011},      // Discover
     {CardTypeMaestro,     16, 2, 61, 61},          // Maestro
