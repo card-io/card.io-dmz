@@ -16,7 +16,7 @@ False negatives - failing to identify the actual expiration date - are undesirab
 
 #### 1. Identify the four card edges.
 
-Described elsewhere [TBD].
+Described [elsewhere](https://www.youtube.com/watch?v=T9TkkZg1L7s).
 
 **Note:** We obtain images from the phone's camera in the [YCbCr](http://en.wikipedia.org/wiki/YCbCr) format. The Y plane is the grayscale image; the other two planes contain all color information.
 
@@ -24,11 +24,11 @@ This is the only step that looks at all three planes. For all following steps, w
 
 #### 2. Geometrically transform the image to produce a properly sized rectangle.
 
-Described elsewhere [TBD].
+Described [elsewhere](https://www.youtube.com/watch?v=T9TkkZg1L7s).
 
 #### 3. Locate the card number.
 
-Described elsewhere [TBD].
+Described [elsewhere](https://www.youtube.com/watch?v=T9TkkZg1L7s).
 
 If unsuccessful, then proceed to next image from the video stream. Otherwise, continue.
 
