@@ -9,6 +9,7 @@
 #include "scan.h"
 #include "expiry_categorize.h"
 #include "expiry_seg.h"
+#include "ocre.h"
 
 #define SCAN_FOREVER 0  // useful for performance profiling
 #define EXTRA_TIME_FOR_EXPIRY_IN_MICROSECONDS 1000 // once the card number has been successfully identified, allow a bit more time to figure out the expiry
@@ -18,6 +19,31 @@
 
 void scanner_initialize(ScannerState *state) {
   scanner_reset(state);
+  ocre_init();
+}
+
+void ocre_scanner_init() {
+  ocre_init();
+}
+
+void ocre_scanner_scan(IplImage *y) {
+  ocre_scanImage(y);
+}
+
+bool ocre_scanner_complete() {
+  return ocre_complete();
+}
+
+char* ocre_scanner_result() {
+  return ocre_result();
+}
+
+void ocre_scanner_reset() {
+  ocre_reset();
+}
+
+void ocre_scanner_destroy() {
+  ocre_destroy();
 }
 
 void scanner_reset(ScannerState *state) {
@@ -194,7 +220,7 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
 }
 
 void scanner_destroy(ScannerState *state) {
-  // currently a no-op
+  ocre_scanner_destroy();
 }
 
 

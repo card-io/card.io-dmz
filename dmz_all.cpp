@@ -31,6 +31,7 @@
 #include "./scan/n_vseg.cpp"
 #include "./scan/scan.cpp"
 #include "./scan/scan_analytics.cpp"
+#include "./scan/ocre.cpp"
 
   #if SCAN_EXPIRY
     #include "./models/expiry/modelc_bf4dd6c8.cpp"
