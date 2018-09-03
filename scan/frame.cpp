@@ -23,8 +23,8 @@
 
 DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool scan_expiry, FrameScanResult *result) {
   assert(NULL == y->roi);
-  assert(y->width == 428);
-  assert(y->height == 270);
+  assert(y->width == kCreditCardTargetWidth);
+  assert(y->height == kCreditCardTargetHeight);
   assert(y->depth == IPL_DEPTH_8U);
   assert(y->nChannels == 1);
 

@@ -17,7 +17,7 @@
 #include "models/generated/modelc_b00bf70c.hpp"
 
 // TODO: gpu for matrix mult?
-
+#include "dmz_constants.h"
 
 typedef Eigen::Matrix<float, 27, 19, Eigen::RowMajor> NumberImage;
 typedef Eigen::Matrix<float, 1, 10, Eigen::RowMajor> SingleNumberScores;
@@ -81,7 +81,7 @@ DMZ_INTERNAL NumberScores number_scores(IplImage *y_strip, NHorizontalSegmentati
   uint16_t y_offset = 0;
   if(NULL != y_strip->roi) {
     y_offset = (uint16_t)y_strip->roi->yOffset;
-    assert(y_strip->roi->width == 428);
+    assert(y_strip->roi->width == kCreditCardTargetWidth);
     assert(y_strip->roi->xOffset == 0);
   }
 

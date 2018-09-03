@@ -60,7 +60,7 @@ DMZ_INTERNAL inline void best_segmentation_for_vseg_scores(float *visalike_score
   best->pattern_type = NumberPatternUnknown;
   best->y_offset = 0;
   
-  for(uint16_t y_offset = 0; y_offset < 270; y_offset++) {
+  for(uint16_t y_offset = 0; y_offset < kCreditCardTargetHeight; y_offset++) {
     float visalike_score = visalike_scores[y_offset];
     float amexlike_score = amexlike_scores[y_offset];
 
@@ -106,14 +106,14 @@ DMZ_INTERNAL NVerticalSegmentation best_n_vseg(IplImage *y) {
   IplImage *as_float = cvCreateImage(cvSize(204, 1), IPL_DEPTH_32F, 1);
 
   // Score buffers, to be filled in as needed
-  float visalike_scores[270];
+  float visalike_scores[kCreditCardTargetHeight];
   memset(visalike_scores, 0, sizeof(visalike_scores));
 
-  float amexlike_scores[270];
+  float amexlike_scores[kCreditCardTargetHeight];
   memset(amexlike_scores, 0, sizeof(amexlike_scores));
 
   uint16_t min_y_offset = 0;
-  uint16_t max_y_offset = 270;
+  uint16_t max_y_offset = kCreditCardTargetHeight;
   uint8_t y_offset_step = 4;
 
   // Initially, calculate every fourth score, to narrow down the area in which we have to work
@@ -137,8 +137,8 @@ DMZ_INTERNAL NVerticalSegmentation best_n_vseg(IplImage *y) {
   // whether it is actually a credit card present or not
 
   // All values must be bounds checked against 270 and (when needed) safely against 0 (using uints!)
-  min_y_offset = MIN(270, best.y_offset < kFineTuningBuffer ? 0 : best.y_offset - kFineTuningBuffer);
-  max_y_offset = MIN(270, best.y_offset + kVertSegSumWindowSize + kFineTuningBuffer);
+  min_y_offset = MIN(kCreditCardTargetHeight, best.y_offset < kFineTuningBuffer ? 0 : best.y_offset - kFineTuningBuffer);
+  max_y_offset = MIN(kCreditCardTargetHeight, best.y_offset + kVertSegSumWindowSize + kFineTuningBuffer);
   y_offset_step = 1;
 
   for(uint16_t y_offset = min_y_offset; y_offset < max_y_offset; y_offset += y_offset_step) {
