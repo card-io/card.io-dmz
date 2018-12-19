@@ -85,7 +85,13 @@ void scanner_add_frame_with_expiry(ScannerState *state, IplImage *y, bool scan_e
   }
 }
 
+// legacy scanner_result function that can be removed
+// once Android and iOS source use scanner_frame_result
 void scanner_result(ScannerState *state, ScannerResult *result) {
+    scanner_frame_result(state, result, 0);
+}
+
+void scanner_frame_result(ScannerState *state, ScannerResult *result, FrameScanResult *frameResult) {
   result->complete = false; // until we change our minds otherwise...avoids having to set this at all the possible early exits
 
 #if SCAN_FOREVER
@@ -145,18 +151,21 @@ void scanner_result(ScannerState *state, ScannerResult *result) {
       }
     }
     dmz_debug_print("\n");
+    if (frameResult) frameResult->scan_progress = SCAN_PROGRESS_STABILITY;
 
     // Don't return a number that fails basic prefix sanity checks
     CardType card_type = dmz_card_info_for_prefix_and_length(number_as_u8s, result->n_numbers, false).card_type;
-    if(card_type != CardTypeAmbiguous &&
-       card_type != CardTypeUnrecognized &&
-       dmz_passes_luhn_checksum(number_as_u8s, result->n_numbers)) {
+    if(card_type != CardTypeAmbiguous && card_type != CardTypeUnrecognized) {
+      if (frameResult) frameResult->scan_progress = SCAN_PROGRESS_CARDTYPE;
 
-      dmz_debug_print("CARD NUMBER SCANNED SUCCESSFULLY.\n");
-      struct timeval time;
-      gettimeofday(&time, NULL);
-      state->timeOfCardNumberCompletionInMilliseconds = (long)((time.tv_sec * 1000) + (time.tv_usec / 1000));
-      state->successfulCardNumberResult = *result;
+      if (dmz_passes_luhn_checksum(number_as_u8s, result->n_numbers)) {
+        if (frameResult) frameResult->scan_progress = SCAN_PROGRESS_LUHN;
+        dmz_debug_print("CARD NUMBER SCANNED SUCCESSFULLY.\n");
+        struct timeval time;
+        gettimeofday(&time, NULL);
+        state->timeOfCardNumberCompletionInMilliseconds = (long)((time.tv_sec * 1000) + (time.tv_usec / 1000));
+        state->successfulCardNumberResult = *result;
+      }
     }
   }
 

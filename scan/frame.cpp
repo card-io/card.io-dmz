@@ -44,6 +44,9 @@ DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool sc
   if(!result->usable) {
     dmz_debug_log("vseg.score %f unusable", result->vseg.score);
     return;
+  } else {
+    dmz_debug_log("vseg.score: %f", result->vseg.score);
+    result->scan_progress = SCAN_PROGRESS_VSEG;
   }
 
   if (collect_card_number) {
@@ -64,6 +67,10 @@ DMZ_INTERNAL void scan_card_image(IplImage *y, bool collect_card_number, bool sc
     result->usable = number_score < kMaxNumberScoreDelta;
     if (!result->usable) {
       dmz_debug_log("number_score %f unusable", number_score);
+      return;
+    } else {
+      dmz_debug_log("number_score %f", number_score);
+      result->scan_progress = SCAN_PROGRESS_HSEG;
     }
     cvResetImageROI(y);
   }
