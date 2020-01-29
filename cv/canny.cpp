@@ -49,7 +49,7 @@
 #include "canny.h"
 #include "sobel.h"
 #include "opencv2/core/core.hpp" // needed for IplImage
-#include "opencv2/core/internal.hpp"
+#include "opencv2/core/private.hpp"
 
 #if DMZ_HAS_NEON_COMPILETIME
   #include <arm_neon.h>

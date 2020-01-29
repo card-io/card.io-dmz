@@ -18,6 +18,7 @@
   #include "processor_support.h"
 #endif
 
+#include <iostream>
 
 // Conv layer 1 of 2
 
@@ -12491,6 +12492,9 @@ typedef Eigen::Matrix<float, 176, 1, Eigen::ColMajor> ModelCHiddenResult_bf4dd6c
 
 typedef Eigen::Matrix<float, 10, 176, Eigen::RowMajor> ModelCLogisticW_bf4dd6c8;
 typedef Eigen::Matrix<float, 10, 1, Eigen::ColMajor> ModelCLogisticB_bf4dd6c8;
+
+#undef MAX
+#define MAX(a, b) (((a) > (b)) ? (a) : (b) )
 
 DMZ_INTERNAL float rectified_linear_unit_activation_bf4dd6c8(float value) {
   return MAX(value, 0.0f);

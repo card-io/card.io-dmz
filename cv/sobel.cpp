@@ -399,18 +399,18 @@ DMZ_INTERNAL void vectorized_convolve_transpose7(IplImage *image, IplImage *dest
 
   int16_t kernels[8][8] = {
     // leading edge replication
-    {kernel7[0] + kernel7[1] + kernel7[2] + kernel7[3], kernel7[4], kernel7[5], kernel7[6],          0,          0, 0, 0},
-    {kernel7[0] + kernel7[1] + kernel7[2],              kernel7[3], kernel7[4], kernel7[5], kernel7[6],          0, 0, 0},
-    {kernel7[0] + kernel7[1],                           kernel7[2], kernel7[3], kernel7[4], kernel7[5], kernel7[6], 0, 0},
+    {(int16_t)(kernel7[0] + kernel7[1] + kernel7[2] + kernel7[3]), kernel7[4], kernel7[5], kernel7[6],          0,          0, 0, 0},
+    {(int16_t)(kernel7[0] + kernel7[1] + kernel7[2]),              kernel7[3], kernel7[4], kernel7[5], kernel7[6],          0, 0, 0},
+    {(int16_t)(kernel7[0] + kernel7[1]),                           kernel7[2], kernel7[3], kernel7[4], kernel7[5], kernel7[6], 0, 0},
 
     // main body
     {kernel7[0], kernel7[1], kernel7[2], kernel7[3], kernel7[4], kernel7[5], kernel7[6], 0},
 
     // trailing edge replication
     {0, kernel7[0], kernel7[1], kernel7[2], kernel7[3], kernel7[4], kernel7[5], kernel7[6]},
-    {0,          0, kernel7[0], kernel7[1], kernel7[2], kernel7[3], kernel7[4], kernel7[5] + kernel7[6]},
-    {0,          0,          0, kernel7[0], kernel7[1], kernel7[2], kernel7[3], kernel7[4] + kernel7[5] + kernel7[6]},
-    {0,          0,          0,          0, kernel7[0], kernel7[1], kernel7[2], kernel7[3] + kernel7[4] + kernel7[5] + kernel7[6]}
+    {0,          0, kernel7[0], kernel7[1], kernel7[2], kernel7[3], kernel7[4], (int16_t)(kernel7[5] + kernel7[6])},
+    {0,          0,          0, kernel7[0], kernel7[1], kernel7[2], kernel7[3], (int16_t)(kernel7[4] + kernel7[5] + kernel7[6])},
+    {0,          0,          0,          0, kernel7[0], kernel7[1], kernel7[2], (int16_t)(kernel7[3] + kernel7[4] + kernel7[5] + kernel7[6])}
   };
 
   for(uint16_t row_index = 0; row_index < imageSize.height; row_index++) {
